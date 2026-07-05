@@ -708,6 +708,30 @@
                 }
             }
 
+            // Draw thick black grid lines every 5 cells
+            [ctx, baseCtx].forEach(context => {
+                context.lineWidth = 2;
+                context.strokeStyle = '#000000';
+                context.beginPath();
+                
+                // Draw Vertical lines (X-axis)
+                for (let x = 5; x <= gridW; x += 5) {
+                    const xPos = axisOffset + (x * cellSize);
+                    context.moveTo(xPos, axisOffset);
+                    context.lineTo(xPos, axisOffset + (gridH * cellSize));
+                }
+                
+                // Draw Horizontal lines (Y-axis)
+                for (let y = 5; y <= gridH; y += 5) {
+                    const yPos = axisOffset + (y * cellSize);
+                    context.moveTo(axisOffset, yPos);
+                    context.lineTo(axisOffset + (gridW * cellSize), yPos);
+                }
+                
+                context.stroke();
+                context.lineWidth = 1; // Reset line width back to default
+            });
+
             // Generate Table 
             generateBeadTable(beadCounts);
             
