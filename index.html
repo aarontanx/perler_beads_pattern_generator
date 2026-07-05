@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perler Bead Pattern Generator Pro</title>
+    <style>
+        :root {
+            --bg-color: #f4f4f9;
+            --container-bg: #ffffff;
+            --text-color: #333;
+            --border-color: #ccc;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .controls {
+            background-color: var(--container-bg);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            max-width: 1000px;
+            width: 100%;
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: flex-end;
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-width: 140px;
+        }
+        .checkbox-group {
+            flex-direction: row;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        label {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        input[type="file"], input[type="number"], select, button {
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s;
+            height: 36px;
+            padding: 0 15px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .download-group {
+            display: flex;
+            gap: 5px;
+            align-items: stretch;
+            flex: 2;
+            min-width: 250px;
+        }
+        .download-group select {
+            flex: 1;
+        }
+        #downloadBtn {
+            background-color: #28a745;
+            margin-top: 0;
+        }
+        #downloadBtn:hover {
+            background-color: #218838;
+        }
+        #downloadBtn:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        .canvas-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            width: 100%;
+        }
+        .canvas-container {
+            width: 100%;
+            max-width: 800px;
+            background-color: var(--container-bg);
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .canvas-container h2 {
+            margin-top: 0;
+            font-size: 18px;
+            color: #555;
+            text-align: center;
+        }
+        canvas {
+            display: block;
+            background: #fff;
+            max-width: 100%;
+            height: auto;
+            box-sizing: border-box;
+        }
+        /* New Table Styles */
+        .table-container {
+            width: 100%;
+            max-width: 800px;
+            background-color: var(--container-bg);
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
+        .table-container h2 {
+            margin-top: 0;
+            font-size: 18px;
+            color: #555;
+            text-align: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f8f9fa;
+        }
+        .color-swatch {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 1px solid #000;
+            vertical-align: middle;
+            margin-right: 10px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Perler Bead Pattern Generator</h1>
+
+    <div class="controls">
+        <div class="control-group" style="flex: 2; min-width: 200px;">
+            <label for="imageUpload">Upload Image</label>
+            <div class="checkbox-group">
+                <input type="checkbox" id="autoCrop" checked>
+                <label for="autoCrop" style="margin: 0; font-weight: normal;">Auto-Crop White Space</label>
+            </div>
+            <input type="file" id="imageUpload" accept="image/*">
+        </div>
+        <div class="control-group" style="flex: 1.5;">
+            <label for="colorAlgo">Color Matching Algorithm</label>
+            <select id="colorAlgo">
+                <option value="redmean">1. Redmean (Perceptual Balance)</option>
+                <option value="cielab76" selected>2. CIE76 (Pro Visual Perception)</option>
+                <option value="euclidean">3. Euclidean (True RGB)</option>
+                <option value="weighted_rgb">4. Weighted RGB (Classic Luminescence)</option>
+                <option value="luma">5. Luma (YIQ Contrast)</option>
+                <option value="hsv">6. HSV Space (Prioritizes Hue)</option>
+                <option value="hsl">7. HSL Space (Prioritizes Lightness/Hue)</option>
+                <option value="cmyk">8. CMYK Space (Physical Dye Matching)</option>
+                <option value="manhattan">9. Manhattan (Taxicab RGB)</option>
+                <option value="chebyshev">10. Chebyshev (Max RGB Difference)</option>
+            </select>
+        </div>
+        <div class="control-group" style="flex: 0.5;">
+            <label for="gridWidth">Width</label>
+            <input type="number" id="gridWidth" value="30" min="5" max="200">
+        </div>
+        <div class="control-group" style="flex: 0.5;">
+            <label for="gridHeight">Height</label>
+            <input type="number" id="gridHeight" value="30" min="5" max="200">
+        </div>
+        <div class="control-group">
+            <button id="generateBtn">Generate Pattern</button>
+        </div>
+        <div class="control-group download-group">
+            <select id="dlType">
+                <option value="blueprint">Download Blueprint (With Codes)</option>
+                <option value="base">Download Base Grid (No Codes)</option>
+                <option value="fused">Download Fused Preview</option>
+            </select>
+            <button id="downloadBtn" disabled>Download</button>
+        </div>
+    </div>
+
+    <div class="canvas-wrapper">
+        <div class="canvas-container">
+            <h2>Base Grid (No Codes)</h2>
+            <canvas id="baseCanvas"></canvas>
+        </div>
+        <div class="canvas-container">
+            <h2>Blueprint Guide (Codes)</h2>
+            <canvas id="outputCanvas"></canvas>
+        </div>
+        <div class="canvas-container">
+            <h2>Fused Simulation</h2>
+            <canvas id="fusedCanvas"></canvas>
+        </div>
+    </div>
+
+    <div class="table-container" id="beadTableContainer" style="display: none;">
+        <h2>Required Bead Quantities</h2>
+        <div id="beadTableContent" style="width: 100%;"></div>
+    </div>
+
+    <script>
+        const beadPalette = [
+            // A Series: Yellows & Oranges
+            {code: 'A1', hex: '#FCFBE3'}, {code: 'A2', hex: '#F0F5D1'}, {code: 'A3', hex: '#EBEB60'}, {code: 'A4', hex: '#FAEA28'}, 
+            {code: 'A5', hex: '#FCCC1A'}, {code: 'A6', hex: '#FCA119'}, {code: 'A7', hex: '#F06718'}, {code: 'A8', hex: '#E0AA16'}, 
+            {code: 'A9', hex: '#F29B52'}, {code: 'A10', hex: '#F58122'}, {code: 'A11', hex: '#FCE07C'}, {code: 'A12', hex: '#FCB59A'}, 
+            {code: 'A13', hex: '#FA7C1E'}, {code: 'A14', hex: '#E64715'}, {code: 'A15', hex: '#F5EE18'}, {code: 'A16', hex: '#F7F374'}, 
+            {code: 'A17', hex: '#FCE538'}, {code: 'A18', hex: '#FA9A41'}, {code: 'A19', hex: '#F54E5B'}, {code: 'A20', hex: '#DECA21'}, 
+            {code: 'A21', hex: '#F7E75E'}, {code: 'A22', hex: '#F7EA6D'}, {code: 'A23', hex: '#FAD5A5'}, {code: 'A24', hex: '#F5F5B5'}, 
+            {code: 'A25', hex: '#F2D35A'}, {code: 'A26', hex: '#F2A61D'},
+
+            // B Series: Greens
+            {code: 'B1', hex: '#B8E61C'}, {code: 'B2', hex: '#77C429'}, {code: 'B3', hex: '#9FE0B3'}, {code: 'B4', hex: '#58D649'}, 
+            {code: 'B5', hex: '#63C96F'}, {code: 'B6', hex: '#119468'}, {code: 'B7', hex: '#0B7D60'}, {code: 'B8', hex: '#267355'}, 
+            {code: 'B9', hex: '#1D594C'}, {code: 'B10', hex: '#6DCCBE'}, {code: 'B11', hex: '#41572C'}, {code: 'B12', hex: '#1D995F'}, 
+            {code: 'B13', hex: '#D2F28A'}, {code: 'B14', hex: '#9CE31E'}, {code: 'B15', hex: '#0A4A33'}, {code: 'B16', hex: '#DEF5A2'}, 
+            {code: 'B17', hex: '#87A845'}, {code: 'B18', hex: '#C2E84A'}, {code: 'B19', hex: '#31A38D'}, {code: 'B20', hex: '#C7EDDF'}, 
+            {code: 'B21', hex: '#0F6166'}, {code: 'B22', hex: '#184C59'}, {code: 'B23', hex: '#243D36'}, {code: 'B24', hex: '#D5F285'}, 
+            {code: 'B25', hex: '#295454'}, {code: 'B26', hex: '#8A874F'}, {code: 'B27', hex: '#A9B38D'}, {code: 'B28', hex: '#9ED1A2'}, 
+            {code: 'B29', hex: '#B8E352'}, {code: 'B30', hex: '#E5F5C1'}, {code: 'B31', hex: '#B4E6A8'}, {code: 'B32', hex: '#81AB5E'},
+
+            // C Series: Blues
+            {code: 'C1', hex: '#E8F7F4'}, {code: 'C2', hex: '#A3DCEC'}, {code: 'C3', hex: '#75CBEB'}, {code: 'C4', hex: '#48BAED'}, 
+            {code: 'C5', hex: '#1C9EE6'}, {code: 'C6', hex: '#1F7DE8'}, {code: 'C7', hex: '#105FE8'}, {code: 'C8', hex: '#0B47D1'}, 
+            {code: 'C9', hex: '#0F2BC9'}, {code: 'C10', hex: '#3CB8D4'}, {code: 'C11', hex: '#199EA8'}, {code: 'C12', hex: '#1A3245'}, 
+            {code: 'C13', hex: '#B9D7F7'}, {code: 'C14', hex: '#D6EDFA'}, {code: 'C15', hex: '#13A6B5'}, {code: 'C16', hex: '#1B5D82'}, 
+            {code: 'C17', hex: '#42BAE8'}, {code: 'C18', hex: '#0C2B4F'}, {code: 'C19', hex: '#116C94'}, {code: 'C20', hex: '#12549E'}, 
+            {code: 'C21', hex: '#A1BBEB'}, {code: 'C22', hex: '#5296A8'}, {code: 'C23', hex: '#8DAFD1'}, {code: 'C24', hex: '#639EED'}, 
+            {code: 'C25', hex: '#8DD1C3'}, {code: 'C26', hex: '#307A99'}, {code: 'C27', hex: '#93A4D6'}, {code: 'C28', hex: '#6C83C4'}, 
+            {code: 'C29', hex: '#324F7D'},
+
+            // D Series: Purples
+            {code: 'D1', hex: '#949CF0'}, {code: 'D2', hex: '#424FDA'}, {code: 'D3', hex: '#161EA3'}, {code: 'D4', hex: '#26377A'}, 
+            {code: 'D5', hex: '#8E3EAD'}, {code: 'D6', hex: '#AF81D4'}, {code: 'D7', hex: '#5E2391'}, {code: 'D8', hex: '#A296E8'}, 
+            {code: 'D9', hex: '#BCAFF0'}, {code: 'D10', hex: '#3B2987'}, {code: 'D11', hex: '#6C71D6'}, {code: 'D12', hex: '#8F4BB5'}, 
+            {code: 'D13', hex: '#9110A6'}, {code: 'D14', hex: '#731682'}, {code: 'D15', hex: '#190A4D'}, {code: 'D16', hex: '#CDDCF5'}, 
+            {code: 'D17', hex: '#72A1ED'}, {code: 'D18', hex: '#6D44B8'}, {code: 'D19', hex: '#9261D1'}, {code: 'D20', hex: '#541094'}, 
+            {code: 'D21', hex: '#340661'}, {code: 'D22', hex: '#15247A'}, {code: 'D23', hex: '#D7DAFA'}, {code: 'D24', hex: '#2E3FCC'}, 
+            {code: 'D25', hex: '#4E21A6'}, {code: 'D26', hex: '#A892DB'},
+
+            // E Series: Pinks
+            {code: 'E1', hex: '#FAD2CD'}, {code: 'E2', hex: '#F2A2CA'}, {code: 'E3', hex: '#F261A6'}, {code: 'E4', hex: '#E82A8C'}, 
+            {code: 'E5', hex: '#DB096F'}, {code: 'E6', hex: '#D10B4D'}, {code: 'E7', hex: '#820531'}, {code: 'E8', hex: '#F7C6D2'}, 
+            {code: 'E9', hex: '#D94396'}, {code: 'E10', hex: '#E30B9A'}, {code: 'E11', hex: '#FCD7CC'}, {code: 'E12', hex: '#E685B6'}, 
+            {code: 'E13', hex: '#730A58'}, {code: 'E14', hex: '#FCD9A2'}, {code: 'E15', hex: '#E0B4B4'}, {code: 'E16', hex: '#F5E6E6'}, 
+            {code: 'E17', hex: '#EDBAD9'}, {code: 'E18', hex: '#F5A9D2'}, {code: 'E19', hex: '#D998C4'}, {code: 'E20', hex: '#A87A9A'}, 
+            {code: 'E21', hex: '#856A7A'}, {code: 'E22', hex: '#5C3857'}, {code: 'E23', hex: '#4A3348'}, {code: 'E24', hex: '#E6D5E3'},
+
+            // F Series: Reds
+            {code: 'F1', hex: '#FAB7A1'}, {code: 'F2', hex: '#FA725F'}, {code: 'F3', hex: '#F04C41'}, {code: 'F4', hex: '#D41111'}, 
+            {code: 'F5', hex: '#A30D20'}, {code: 'F6', hex: '#700919'}, {code: 'F7', hex: '#420413'}, {code: 'F8', hex: '#8A1527'}, 
+            {code: 'F9', hex: '#F06C86'}, {code: 'F10', hex: '#7A3F31'}, {code: 'F11', hex: '#3B1812'}, {code: 'F12', hex: '#DE2F35'}, 
+            {code: 'F13', hex: '#B53322'}, {code: 'F14', hex: '#F2A0A9'}, {code: 'F15', hex: '#A10515'}, {code: 'F16', hex: '#F7D6CC'}, 
+            {code: 'F17', hex: '#E6886A'}, {code: 'F18', hex: '#B35E44'}, {code: 'F19', hex: '#94384A'}, {code: 'F20', hex: '#B06977'}, 
+            {code: 'F21', hex: '#D9899C'}, {code: 'F22', hex: '#F0B9BC'}, {code: 'F23', hex: '#EB7373'}, {code: 'F24', hex: '#F7A8A3'}, 
+            {code: 'F25', hex: '#D61A2A'},
+
+            // G Series: Browns
+            {code: 'G1', hex: '#F5E4B5'}, {code: 'G2', hex: '#F0CDA5'}, {code: 'G3', hex: '#DEAA7A'}, {code: 'G4', hex: '#B58B69'}, 
+            {code: 'G5', hex: '#D99845'}, {code: 'G6', hex: '#AD6F24'}, {code: 'G7', hex: '#734A1B'}, {code: 'G8', hex: '#2E1E12'}, 
+            {code: 'G9', hex: '#BA9252'}, {code: 'G10', hex: '#87562D'}, {code: 'G11', hex: '#C4B98E'}, {code: 'G12', hex: '#A69263'}, 
+            {code: 'G13', hex: '#966751'}, {code: 'G14', hex: '#633B26'}, {code: 'G15', hex: '#E8F2D5'}, {code: 'G16', hex: '#BDC2A1'}, 
+            {code: 'G17', hex: '#666B57'}, {code: 'G18', hex: '#F0E6D8'}, {code: 'G19', hex: '#C99E34'}, {code: 'G20', hex: '#8C5738'}, 
+            {code: 'G21', hex: '#A17855'},
+
+            // H Series: Greys, Blacks, & Whites
+            {code: 'H1', hex: '#FAFAFA'}, {code: 'H2', hex: '#FFFFFF'}, {code: 'H3', hex: '#8C94A1'}, {code: 'H4', hex: '#6B717D'}, 
+            {code: 'H5', hex: '#3E424A'}, {code: 'H6', hex: '#1C1E24'}, {code: 'H7', hex: '#000000'}, {code: 'H8', hex: '#C8C4C9'}, 
+            {code: 'H9', hex: '#9B999E'}, {code: 'H10', hex: '#B5BAC7'}, {code: 'H11', hex: '#9398A6'}, {code: 'H12', hex: '#E3E6D8'}, 
+            {code: 'H13', hex: '#BDBFA8'}, {code: 'H14', hex: '#758087'}, {code: 'H15', hex: '#586A75'}, {code: 'H16', hex: '#282F36'}, 
+            {code: 'H17', hex: '#D8DBDE'}, {code: 'H18', hex: '#F5F5ED'}, {code: 'H19', hex: '#E3E0CE'}, {code: 'H20', hex: '#879BA8'}, 
+            {code: 'H21', hex: '#D5DFE6'}, {code: 'H22', hex: '#CAD6CD'}, {code: 'H23', hex: '#9AA69D'},
+
+            // M Series: Muted & Dusty Tones
+            {code: 'M1', hex: '#758F8B'}, {code: 'M2', hex: '#50756A'}, {code: 'M3', hex: '#3F5970'}, {code: 'M4', hex: '#877B78'}, 
+            {code: 'M5', hex: '#ADA57A'}, {code: 'M6', hex: '#9E8B67'}, {code: 'M7', hex: '#665251'}, {code: 'M8', hex: '#5C4349'}, 
+            {code: 'M9', hex: '#BA9C71'}, {code: 'M10', hex: '#776B85'}, {code: 'M11', hex: '#544673'}, {code: 'M12', hex: '#332938'}, 
+            {code: 'M13', hex: '#9E5B4D'}, {code: 'M14', hex: '#8A3B31'}, {code: 'M15', hex: '#414D54'}
+        ];
+
+        /* --- ADVANCED COLOR MATH HELPERS --- */
+        
+        function hexToRgb(hex) {
+            let r = parseInt(hex.substring(1, 3), 16);
+            let g = parseInt(hex.substring(3, 5), 16);
+            let b = parseInt(hex.substring(5, 7), 16);
+            return { r, g, b };
+        }
+
+        function rgbToXyz(r, g, b) {
+            let _r = (r / 255);
+            let _g = (g / 255);
+            let _b = (b / 255);
+
+            _r = _r > 0.04045 ? Math.pow((_r + 0.055) / 1.055, 2.4) : _r / 12.92;
+            _g = _g > 0.04045 ? Math.pow((_g + 0.055) / 1.055, 2.4) : _g / 12.92;
+            _b = _b > 0.04045 ? Math.pow((_b + 0.055) / 1.055, 2.4) : _b / 12.92;
+
+            _r = _r * 100; _g = _g * 100; _b = _b * 100;
+
+            return {
+                x: _r * 0.4124 + _g * 0.3576 + _b * 0.1805,
+                y: _r * 0.2126 + _g * 0.7152 + _b * 0.0722,
+                z: _r * 0.0193 + _g * 0.1192 + _b * 0.9505
+            };
+        }
+
+        function xyzToLab(x, y, z) {
+            // Observer= 2°, Illuminant= D65
+            let _x = x / 95.047;
+            let _y = y / 100.000;
+            let _z = z / 108.883;
+
+            _x = _x > 0.008856 ? Math.pow(_x, 1/3) : (7.787 * _x) + (16 / 116);
+            _y = _y > 0.008856 ? Math.pow(_y, 1/3) : (7.787 * _y) + (16 / 116);
+            _z = _z > 0.008856 ? Math.pow(_z, 1/3) : (7.787 * _z) + (16 / 116);
+
+            return {
+                l: (116 * _y) - 16,
+                a: 500 * (_x - _y),
+                b: 200 * (_y - _z)
+            };
+        }
+
+        function rgbToLab(r, g, b) {
+            const xyz = rgbToXyz(r, g, b);
+            return xyzToLab(xyz.x, xyz.y, xyz.z);
+        }
+
+        function rgbToHsv(r, g, b) {
+            let rabs = r/255, gabs = g/255, babs = b/255;
+            let v = Math.max(rabs, gabs, babs), diff = v - Math.min(rabs, gabs, babs);
+            let diffc = c => (v - c) / 6 / diff + 1 / 2;
+            let h = 0, s = 0;
+            if (diff !== 0) {
+                s = diff / v;
+                let rr = diffc(rabs), gg = diffc(gabs), bb = diffc(babs);
+                if (rabs === v) h = bb - gg;
+                else if (gabs === v) h = (1 / 3) + rr - bb;
+                else if (babs === v) h = (2 / 3) + gg - rr;
+                if (h < 0) h += 1;
+                else if (h > 1) h -= 1;
+            }
+            return { h: Math.round(h * 360), s: s * 100, v: v * 100 };
+        }
+
+        function rgbToHsl(r, g, b) {
+            r /= 255; g /= 255; b /= 255;
+            const max = Math.max(r, g, b), min = Math.min(r, g, b);
+            let h, s, l = (max + min) / 2;
+            if (max === min) { h = s = 0; }
+            else {
+                const d = max - min;
+                s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                switch (max) {
+                    case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                    case g: h = (b - r) / d + 2; break;
+                    case b: h = (r - g) / d + 4; break;
+                }
+                h /= 6;
+            }
+            return { h: h * 360, s: s * 100, l: l * 100 };
+        }
+
+        function rgbToCmyk(r, g, b) {
+            let c = 1 - (r / 255);
+            let m = 1 - (g / 255);
+            let y = 1 - (b / 255);
+            let k = Math.min(c, Math.min(m, y));
+            if (k === 1) return { c: 0, m: 0, y: 0, k: 1 };
+            return {
+                c: (c - k) / (1 - k),
+                m: (m - k) / (1 - k),
+                y: (y - k) / (1 - k),
+                k: k
+            };
+        }
+
+        const paletteData = beadPalette.map(color => {
+            const rgb = hexToRgb(color.hex);
+            return {
+                ...color,
+                rgb: rgb,
+                lab: rgbToLab(rgb.r, rgb.g, rgb.b),
+                hsv: rgbToHsv(rgb.r, rgb.g, rgb.b),
+                hsl: rgbToHsl(rgb.r, rgb.g, rgb.b),
+                cmyk: rgbToCmyk(rgb.r, rgb.g, rgb.b)
+            };
+        });
+
+        function findClosestColor(r, g, b, algorithm) {
+            let minDistance = Infinity;
+            let closestColor = paletteData[0];
+            
+            let targetLab, targetHsv, targetHsl, targetCmyk;
+            if (algorithm === 'cielab76') targetLab = rgbToLab(r, g, b);
+            if (algorithm === 'hsv') targetHsv = rgbToHsv(r, g, b);
+            if (algorithm === 'hsl') targetHsl = rgbToHsl(r, g, b);
+            if (algorithm === 'cmyk') targetCmyk = rgbToCmyk(r, g, b);
+
+            for (let i = 0; i < paletteData.length; i++) {
+                const color = paletteData[i];
+                const dR = r - color.rgb.r;
+                const dG = g - color.rgb.g;
+                const dB = b - color.rgb.b;
+                let distance = 0;
+
+                switch(algorithm) {
+                    case 'euclidean':
+                        distance = Math.sqrt((dR*dR) + (dG*dG) + (dB*dB));
+                        break;
+                    case 'redmean':
+                        const rMean = (r + color.rgb.r) / 2;
+                        const weightR = 2 + rMean / 256;
+                        const weightB = 2 + (255 - rMean) / 256;
+                        distance = Math.sqrt(weightR * (dR*dR) + 4.0 * (dG*dG) + weightB * (dB*dB));
+                        break;
+                    case 'weighted_rgb':
+                        distance = Math.sqrt(0.3*(dR*dR) + 0.59*(dG*dG) + 0.11*(dB*dB));
+                        break;
+                    case 'luma':
+                        distance = Math.sqrt(Math.pow(dR*0.299, 2) + Math.pow(dG*0.587, 2) + Math.pow(dB*0.114, 2));
+                        break;
+                    case 'manhattan':
+                        distance = Math.abs(dR) + Math.abs(dG) + Math.abs(dB);
+                        break;
+                    case 'chebyshev':
+                        distance = Math.max(Math.abs(dR), Math.abs(dG), Math.abs(dB));
+                        break;
+                    case 'cielab76':
+                        const dL = targetLab.l - color.lab.l;
+                        const da = targetLab.a - color.lab.a;
+                        const db = targetLab.b - color.lab.b;
+                        distance = Math.sqrt((dL*dL) + (da*da) + (db*db));
+                        break;
+                    case 'hsv':
+                        const dhHSV = Math.min(Math.abs(targetHsv.h - color.hsv.h), 360 - Math.abs(targetHsv.h - color.hsv.h)) / 360;
+                        const dsHSV = (targetHsv.s - color.hsv.s) / 100;
+                        const dvHSV = (targetHsv.v - color.hsv.v) / 100;
+                        distance = Math.sqrt((dhHSV*dhHSV*4) + (dsHSV*dsHSV) + (dvHSV*dvHSV));
+                        break;
+                    case 'hsl':
+                        const dhHSL = Math.min(Math.abs(targetHsl.h - color.hsl.h), 360 - Math.abs(targetHsl.h - color.hsl.h)) / 360;
+                        const dsHSL = (targetHsl.s - color.hsl.s) / 100;
+                        const dlHSL = (targetHsl.l - color.hsl.l) / 100;
+                        distance = Math.sqrt((dhHSL*dhHSL*4) + (dsHSL*dsHSL) + (dlHSL*dlHSL));
+                        break;
+                    case 'cmyk':
+                        const dC = targetCmyk.c - color.cmyk.c;
+                        const dM = targetCmyk.m - color.cmyk.m;
+                        const dY = targetCmyk.y - color.cmyk.y;
+                        const dK = targetCmyk.k - color.cmyk.k;
+                        distance = Math.sqrt((dC*dC) + (dM*dM) + (dY*dY) + (dK*dK));
+                        break;
+                }
+
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closestColor = color;
+                }
+            }
+            return closestColor;
+        }
+
+        function getContrastYIQ(r, g, b) {
+            const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+            return (yiq >= 128) ? '#000000' : '#FFFFFF';
+        }
+
+        const imageUpload = document.getElementById('imageUpload');
+        const generateBtn = document.getElementById('generateBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const outputCanvas = document.getElementById('outputCanvas');
+        const baseCanvas = document.getElementById('baseCanvas');
+        const fusedCanvas = document.getElementById('fusedCanvas');
+        const ctx = outputCanvas.getContext('2d');
+        const baseCtx = baseCanvas.getContext('2d');
+        const fusedCtx = fusedCanvas.getContext('2d');
+
+        let croppedImageData = null;
+
+        imageUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = () => {
+                    const tempCanvas = document.createElement('canvas');
+                    tempCanvas.width = img.width;
+                    tempCanvas.height = img.height;
+                    const tempCtx = tempCanvas.getContext('2d');
+                    tempCtx.drawImage(img, 0, 0);
+                    
+                    const imgData = tempCtx.getImageData(0, 0, img.width, img.height);
+                    const data = imgData.data;
+                    
+                    let minX = 0, minY = 0, maxX = img.width - 1, maxY = img.height - 1;
+                    
+                    if (document.getElementById('autoCrop').checked) {
+                        minX = img.width; minY = img.height; maxX = 0; maxY = 0;
+                        for (let y = 0; y < img.height; y++) {
+                            for (let x = 0; x < img.width; x++) {
+                                const i = (y * img.width + x) * 4;
+                                const r = data[i], g = data[i+1], b = data[i+2], a = data[i+3];
+                                
+                                const isWhite = (r > 240 && g > 240 && b > 240);
+                                if (a > 50 && !isWhite) {
+                                    if (x < minX) minX = x;
+                                    if (x > maxX) maxX = x;
+                                    if (y < minY) minY = y;
+                                    if (y > maxY) maxY = y;
+                                }
+                            }
+                        }
+                        if (maxX < minX || maxY < minY) {
+                            minX = 0; minY = 0; maxX = img.width - 1; maxY = img.height - 1;
+                        }
+                    }
+
+                    const croppedWidth = maxX - minX + 1;
+                    const croppedHeight = maxY - minY + 1;
+
+                    const cropCanvas = document.createElement('canvas');
+                    cropCanvas.width = croppedWidth;
+                    cropCanvas.height = croppedHeight;
+                    const cropCtx = cropCanvas.getContext('2d');
+                    cropCtx.drawImage(img, minX, minY, croppedWidth, croppedHeight, 0, 0, croppedWidth, croppedHeight);
+                    
+                    croppedImageData = cropCanvas;
+
+                    const maxSize = 50;
+                    let targetW, targetH;
+                    if (croppedWidth > croppedHeight) {
+                        targetW = maxSize;
+                        targetH = Math.max(5, Math.round((croppedHeight / croppedWidth) * maxSize));
+                    } else {
+                        targetH = maxSize;
+                        targetW = Math.max(5, Math.round((croppedWidth / croppedHeight) * maxSize));
+                    }
+
+                    document.getElementById('gridWidth').value = targetW;
+                    document.getElementById('gridHeight').value = targetH;
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        generateBtn.addEventListener('click', () => {
+            if (!croppedImageData) {
+                alert("Please upload an image first.");
+                return;
+            }
+
+            const gridW = parseInt(document.getElementById('gridWidth').value);
+            const gridH = parseInt(document.getElementById('gridHeight').value);
+            const selectedAlgo = document.getElementById('colorAlgo').value;
+
+            const cellSize = 24; 
+            const axisOffset = 30; 
+
+            outputCanvas.width = (gridW * cellSize) + axisOffset;
+            outputCanvas.height = (gridH * cellSize) + axisOffset;
+            
+            baseCanvas.width = (gridW * cellSize) + axisOffset;
+            baseCanvas.height = (gridH * cellSize) + axisOffset;
+
+            fusedCanvas.width = gridW * cellSize;
+            fusedCanvas.height = gridH * cellSize;
+
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = gridW;
+            tempCanvas.height = gridH;
+            const tempCtx = tempCanvas.getContext('2d');
+            
+            tempCtx.drawImage(croppedImageData, 0, 0, gridW, gridH);
+            const imgData = tempCtx.getImageData(0, 0, gridW, gridH).data;
+
+            [ctx, baseCtx].forEach(context => {
+                context.fillStyle = '#ffffff';
+                context.fillRect(0, 0, outputCanvas.width, outputCanvas.height);
+                context.textAlign = 'center';
+                context.textBaseline = 'middle';
+            });
+
+            fusedCtx.fillStyle = '#ffffff'; 
+            fusedCtx.fillRect(0, 0, fusedCanvas.width, fusedCanvas.height);
+
+            [ctx, baseCtx].forEach(context => {
+                context.fillStyle = '#333';
+                context.font = '12px Arial';
+                for (let x = 0; x < gridW; x++) {
+                    if ((x + 1) % 5 === 0 || x === 0) {
+                        context.fillText(x + 1, axisOffset + (x * cellSize) + (cellSize / 2), axisOffset / 2);
+                    }
+                }
+                for (let y = 0; y < gridH; y++) {
+                    if ((y + 1) % 5 === 0 || y === 0) {
+                        context.fillText(y + 1, axisOffset / 2, axisOffset + (y * cellSize) + (cellSize / 2));
+                    }
+                }
+            });
+
+            // Tracking object for bead counts
+            let beadCounts = {};
+
+            for (let y = 0; y < gridH; y++) {
+                for (let x = 0; x < gridW; x++) {
+                    const i = (y * gridW + x) * 4;
+                    const r = imgData[i];
+                    const g = imgData[i + 1];
+                    const b = imgData[i + 2];
+                    const a = imgData[i + 3];
+
+                    if (a < 128) {
+                        [ctx, baseCtx].forEach(context => {
+                            context.fillStyle = '#ffffff';
+                            context.fillRect(axisOffset + x * cellSize, axisOffset + y * cellSize, cellSize, cellSize);
+                            context.strokeStyle = '#eee';
+                            context.strokeRect(axisOffset + x * cellSize, axisOffset + y * cellSize, cellSize, cellSize);
+                        });
+                        continue;
+                    }
+
+                    const matchedColor = findClosestColor(r, g, b, selectedAlgo);
+                    
+                    // Increment count for this bead color
+                    if (!beadCounts[matchedColor.code]) {
+                        beadCounts[matchedColor.code] = {
+                            hex: matchedColor.hex,
+                            count: 0
+                        };
+                    }
+                    beadCounts[matchedColor.code].count++;
+
+                    ctx.fillStyle = matchedColor.hex;
+                    ctx.fillRect(axisOffset + x * cellSize, axisOffset + y * cellSize, cellSize, cellSize);
+                    ctx.strokeStyle = '#aaaaaa';
+                    ctx.strokeRect(axisOffset + x * cellSize, axisOffset + y * cellSize, cellSize, cellSize);
+
+                    ctx.fillStyle = getContrastYIQ(matchedColor.rgb.r, matchedColor.rgb.g, matchedColor.rgb.b);
+                    ctx.font = '10px Arial';
+                    ctx.fillText(
+                        matchedColor.code, 
+                        axisOffset + (x * cellSize) + (cellSize / 2), 
+                        axisOffset + (y * cellSize) + (cellSize / 2)
+                    );
+
+                    baseCtx.fillStyle = matchedColor.hex;
+                    baseCtx.fillRect(axisOffset + x * cellSize, axisOffset + y * cellSize, cellSize, cellSize);
+                    baseCtx.strokeStyle = '#aaaaaa';
+                    baseCtx.strokeRect(axisOffset + x * cellSize, axisOffset + y * cellSize, cellSize, cellSize);
+
+                    const centerX = (x * cellSize) + (cellSize / 2);
+                    const centerY = (y * cellSize) + (cellSize / 2);
+                    
+                    const gradient = fusedCtx.createRadialGradient(
+                        centerX - (cellSize/6), centerY - (cellSize/6), cellSize/10,
+                        centerX, centerY, cellSize/1.5
+                    );
+                    
+                    gradient.addColorStop(0, adjustColorBrightness(matchedColor.hex, 30));
+                    gradient.addColorStop(0.7, matchedColor.hex);
+                    gradient.addColorStop(1, adjustColorBrightness(matchedColor.hex, -20));
+
+                    fusedCtx.beginPath();
+                    fusedCtx.arc(centerX, centerY, (cellSize / 2) * 1.15, 0, 2 * Math.PI, false);
+                    fusedCtx.fillStyle = gradient;
+                    fusedCtx.fill();
+                }
+            }
+
+            // Generate Table 
+            generateBeadTable(beadCounts);
+            
+            downloadBtn.disabled = false;
+        });
+
+        function generateBeadTable(counts) {
+            const container = document.getElementById('beadTableContainer');
+            const content = document.getElementById('beadTableContent');
+            
+            // Convert to array and sort by count descending
+            const sortedCounts = Object.entries(counts).sort((a, b) => b[1].count - a[1].count);
+            
+            if (sortedCounts.length === 0) {
+                container.style.display = 'none';
+                return;
+            }
+
+            let tableHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Color Code</th>
+                            <th>Color Preview</th>
+                            <th>Hex Value</th>
+                            <th>Quantity Required</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            sortedCounts.forEach(([code, data]) => {
+                tableHTML += `
+                    <tr>
+                        <td><strong>${code}</strong></td>
+                        <td><span class="color-swatch" style="background-color: ${data.hex}"></span></td>
+                        <td>${data.hex}</td>
+                        <td>${data.count}</td>
+                    </tr>
+                `;
+            });
+            
+            tableHTML += `
+                    </tbody>
+                </table>
+            `;
+            
+            content.innerHTML = tableHTML;
+            container.style.display = 'flex';
+        }
+
+        function adjustColorBrightness(hex, percent) {
+            let r = parseInt(hex.substring(1, 3), 16);
+            let g = parseInt(hex.substring(3, 5), 16);
+            let b = parseInt(hex.substring(5, 7), 16);
+
+            r = parseInt(r * (100 + percent) / 100);
+            g = parseInt(g * (100 + percent) / 100);
+            b = parseInt(b * (100 + percent) / 100);
+
+            r = (r < 255) ? r : 255;
+            g = (g < 255) ? g : 255;
+            b = (b < 255) ? b : 255;
+
+            const rr = ((r.toString(16).length === 1) ? "0" + r.toString(16) : r.toString(16));
+            const gg = ((g.toString(16).length === 1) ? "0" + g.toString(16) : g.toString(16));
+            const bb = ((b.toString(16).length === 1) ? "0" + b.toString(16) : b.toString(16));
+
+            return "#" + rr + gg + bb;
+        }
+
+        downloadBtn.addEventListener('click', () => {
+            const dlType = document.getElementById('dlType').value;
+            let targetCanvas;
+            
+            if (dlType === 'blueprint') targetCanvas = outputCanvas;
+            else if (dlType === 'base') targetCanvas = baseCanvas;
+            else if (dlType === 'fused') targetCanvas = fusedCanvas;
+
+            const link = document.createElement('a');
+            link.download = `perler-${dlType}.png`;
+            link.href = targetCanvas.toDataURL('image/png');
+            link.click();
+        });
+    </script>
+</body>
+</html>
