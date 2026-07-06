@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -796,9 +796,20 @@
                         <canvas id="baseCanvas"></canvas>
                     </div>
                 </div>
-                <div class="canvas-container">
-                    <h2>Blueprint Guide (Codes)</h2>
-                    <canvas id="outputCanvas"></canvas>
+                <div class="canvas-container" id="blueprintContainer">
+                    <div class="canvas-header-row">
+                        <h2>Blueprint Guide (Codes)</h2>
+                        <div class="canvas-resize-controls" data-target="blueprintContainer">
+                            <button type="button" class="size-step-btn" data-step="-1" aria-label="Decrease Blueprint Guide size">−</button>
+                            <input type="range" class="canvas-size-slider" min="150" max="1200" step="10" aria-label="Resize Blueprint Guide canvas">
+                            <button type="button" class="size-step-btn" data-step="1" aria-label="Increase Blueprint Guide size">+</button>
+                            <span class="canvas-size-value">100%</span>
+                            <button type="button" class="size-reset-btn" aria-label="Reset Blueprint Guide size to default" title="Reset to default size">↺</button>
+                        </div>
+                    </div>
+                    <div class="canvas-scale-wrapper" id="blueprintScaleWrapper">
+                        <canvas id="outputCanvas"></canvas>
+                    </div>
                 </div>
                 <div class="canvas-container" id="fusedSimContainer">
                     <div class="canvas-header-row">
@@ -1434,6 +1445,7 @@
 
         setupCanvasResizeControl('baseGridContainer');
         setupCanvasResizeControl('fusedSimContainer');
+        setupCanvasResizeControl('blueprintContainer');
 
         /* --- ENGINE PATTERN GENERATOR --- */
         function generatePattern() {
