@@ -372,6 +372,88 @@
             padding-left: 8px;
         }
 
+        .canvas-scale-wrapper {
+            width: 100%;
+            max-width: 100%;
+            margin: 0 auto;
+            box-sizing: border-box;
+        }
+
+        .canvas-header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            width: 100%;
+            margin-bottom: 14px;
+        }
+
+        .canvas-header-row h2 {
+            margin: 0;
+        }
+
+        .canvas-resize-controls {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .size-step-btn, .size-reset-btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background-color: var(--input-bg);
+            color: var(--text-color);
+            font-size: 16px;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            cursor: pointer;
+            user-select: none;
+            touch-action: manipulation;
+            transition: background-color 0.15s ease, color 0.15s ease;
+        }
+
+        .size-reset-btn {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .size-step-btn:hover, .size-reset-btn:hover {
+            background-color: var(--accent-color);
+            color: #ffffff;
+            border-color: var(--accent-color);
+        }
+
+        .size-step-btn:active, .size-reset-btn:active {
+            transform: scale(0.94);
+        }
+
+        .canvas-size-slider {
+            width: 90px;
+            height: 30px;
+            touch-action: manipulation;
+        }
+
+        .canvas-size-value {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            width: 38px;
+            text-align: center;
+        }
+
+        @media (max-width: 480px) {
+            .canvas-size-slider {
+                width: 70px;
+            }
+        }
+
         canvas {
             display: block;
             background: #ffffff;
@@ -699,17 +781,39 @@
             </div>
 
             <div class="canvas-grid mode-fit-width">
-                <div class="canvas-container">
-                    <h2>Base Grid (No Codes)</h2>
-                    <canvas id="baseCanvas"></canvas>
+                <div class="canvas-container" id="baseGridContainer">
+                    <div class="canvas-header-row">
+                        <h2>Base Grid (No Codes)</h2>
+                        <div class="canvas-resize-controls" data-target="baseGridContainer">
+                            <button type="button" class="size-step-btn" data-step="-1" aria-label="Decrease Base Grid size">−</button>
+                            <input type="range" class="canvas-size-slider" min="150" max="1200" step="10" aria-label="Resize Base Grid canvas">
+                            <button type="button" class="size-step-btn" data-step="1" aria-label="Increase Base Grid size">+</button>
+                            <span class="canvas-size-value">100%</span>
+                            <button type="button" class="size-reset-btn" aria-label="Reset Base Grid size to default" title="Reset to default size">↺</button>
+                        </div>
+                    </div>
+                    <div class="canvas-scale-wrapper" id="baseGridScaleWrapper">
+                        <canvas id="baseCanvas"></canvas>
+                    </div>
                 </div>
                 <div class="canvas-container">
                     <h2>Blueprint Guide (Codes)</h2>
                     <canvas id="outputCanvas"></canvas>
                 </div>
-                <div class="canvas-container">
-                    <h2>Fused Simulation</h2>
-                    <canvas id="fusedCanvas"></canvas>
+                <div class="canvas-container" id="fusedSimContainer">
+                    <div class="canvas-header-row">
+                        <h2>Fused Simulation</h2>
+                        <div class="canvas-resize-controls" data-target="fusedSimContainer">
+                            <button type="button" class="size-step-btn" data-step="-1" aria-label="Decrease Fused Simulation size">−</button>
+                            <input type="range" class="canvas-size-slider" min="150" max="1200" step="10" aria-label="Resize Fused Simulation canvas">
+                            <button type="button" class="size-step-btn" data-step="1" aria-label="Increase Fused Simulation size">+</button>
+                            <span class="canvas-size-value">100%</span>
+                            <button type="button" class="size-reset-btn" aria-label="Reset Fused Simulation size to default" title="Reset to default size">↺</button>
+                        </div>
+                    </div>
+                    <div class="canvas-scale-wrapper" id="fusedSimScaleWrapper">
+                        <canvas id="fusedCanvas"></canvas>
+                    </div>
                 </div>
             </div>
 
@@ -1280,6 +1384,57 @@
         canvasSizeSlider.addEventListener('input', adjustCanvasDisplaySizing);
         adjustCanvasDisplaySizing(); // Apply column-fit sizing limits immediately
 
+        /* --- INDEPENDENT PER-CANVAS RESIZE CONTROLS (Base Grid / Fused Simulation) --- */
+        function setupCanvasResizeControl(containerId) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+
+            const scaleWrapper = container.querySelector('.canvas-scale-wrapper');
+            const controls = container.querySelector('.canvas-resize-controls');
+            const slider = controls.querySelector('.canvas-size-slider');
+            const decBtn = controls.querySelector('.size-step-btn[data-step="-1"]');
+            const incBtn = controls.querySelector('.size-step-btn[data-step="1"]');
+            const resetBtn = controls.querySelector('.size-reset-btn');
+            const valueLabel = controls.querySelector('.canvas-size-value');
+            const stepAmount = 20;
+
+            function syncSliderToCurrentWidth() {
+                const currentWidth = Math.round(scaleWrapper.getBoundingClientRect().width);
+                const clamped = Math.min(Math.max(currentWidth, parseInt(slider.min)), parseInt(slider.max));
+                slider.value = clamped;
+                valueLabel.textContent = `${clamped}px`;
+            }
+
+            function applyWidth(px) {
+                const clamped = Math.min(Math.max(px, parseInt(slider.min)), parseInt(slider.max));
+                // Only the canvas's own wrapper shrinks/grows; the card, border, padding
+                // and toolbar stay fixed so the surrounding layout never shifts.
+                scaleWrapper.style.maxWidth = `${clamped}px`;
+                slider.value = clamped;
+                valueLabel.textContent = `${clamped}px`;
+            }
+
+            slider.addEventListener('input', () => applyWidth(parseInt(slider.value)));
+
+            decBtn.addEventListener('click', () => applyWidth(parseInt(slider.value) - stepAmount));
+            incBtn.addEventListener('click', () => applyWidth(parseInt(slider.value) + stepAmount));
+
+            resetBtn.addEventListener('click', () => {
+                scaleWrapper.style.removeProperty('max-width');
+                requestAnimationFrame(syncSliderToCurrentWidth);
+            });
+
+            // Initialize the slider to reflect whatever size the global sizing controls produced
+            requestAnimationFrame(syncSliderToCurrentWidth);
+            window.addEventListener('resize', () => {
+                // Only auto-follow the viewport if the user hasn't set a manual override
+                if (!scaleWrapper.style.maxWidth) syncSliderToCurrentWidth();
+            });
+        }
+
+        setupCanvasResizeControl('baseGridContainer');
+        setupCanvasResizeControl('fusedSimContainer');
+
         /* --- ENGINE PATTERN GENERATOR --- */
         function generatePattern() {
             if (!croppedImageData) return;
@@ -1471,21 +1626,14 @@
                     baseCtx.strokeStyle = '#aaaaaa';
                     baseCtx.strokeRect(axisOffset + x * cellSize, axisOffset + y * cellSize, cellSize, cellSize);
 
-                    const centerX = (x * cellSize) + (cellSize / 2);
-                    const centerY = (y * cellSize) + (cellSize / 2);
-                    
-                    const gradient = fusedCtx.createRadialGradient(
-                        centerX - (cellSize/6), centerY - (cellSize/6), cellSize/10,
-                        centerX, centerY, cellSize/1.5
-                    );
-                    
-                    gradient.addColorStop(0, adjustColorBrightness(matchedColor.hex, 30));
-                    gradient.addColorStop(0.7, matchedColor.hex);
-                    gradient.addColorStop(1, adjustColorBrightness(matchedColor.hex, -20));
+                    const beadCornerRadius = cellSize * 0.22;
 
-                    fusedCtx.beginPath();
-                    fusedCtx.arc(centerX, centerY, (cellSize / 2) * 1.15, 0, 2 * Math.PI, false);
-                    fusedCtx.fillStyle = gradient;
+                    drawRoundedSquare(
+                        fusedCtx,
+                        x * cellSize, y * cellSize,
+                        cellSize, beadCornerRadius
+                    );
+                    fusedCtx.fillStyle = matchedColor.hex;
                     fusedCtx.fill();
                 }
             }
@@ -1790,6 +1938,21 @@
             activeBrushColor = code;
             updateBrushUI();
             editorToolSelect.value = 'paint';
+        }
+
+        function drawRoundedSquare(context, x, y, size, radius) {
+            const r = Math.min(radius, size / 2);
+            context.beginPath();
+            context.moveTo(x + r, y);
+            context.lineTo(x + size - r, y);
+            context.arcTo(x + size, y, x + size, y + r, r);
+            context.lineTo(x + size, y + size - r);
+            context.arcTo(x + size, y + size, x + size - r, y + size, r);
+            context.lineTo(x + r, y + size);
+            context.arcTo(x, y + size, x, y + size - r, r);
+            context.lineTo(x, y + r);
+            context.arcTo(x, y, x + r, y, r);
+            context.closePath();
         }
 
         function adjustColorBrightness(hex, percent) {
