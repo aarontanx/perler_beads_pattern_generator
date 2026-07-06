@@ -233,12 +233,67 @@
             border: 1px dashed var(--border-color);
         }
 
+        .thumb-preview-wrapper {
+            overflow: hidden;
+            border-radius: 4px;
+        }
+
         #thumbPreview {
             max-width: 100%;
             max-height: 140px;
             border-radius: 4px;
             display: block;
             margin: 0 auto;
+            transition: transform 0.25s ease;
+        }
+
+        /* Flip Toggle Controls */
+        .flip-toggle-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .flip-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            width: auto;
+            padding: 8px 6px;
+            font-size: 12px;
+            font-weight: 600;
+            background-color: var(--input-bg);
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            cursor: pointer;
+            box-shadow: none;
+            transition: all 0.15s ease;
+        }
+
+        .flip-btn:hover {
+            color: var(--accent-color);
+            border-color: var(--accent-color);
+            background-color: var(--input-bg);
+        }
+
+        .flip-btn.active {
+            background-color: var(--accent-color);
+            color: #ffffff;
+            border-color: var(--accent-color);
+        }
+
+        .flip-icon {
+            display: inline-block;
+            font-size: 13px;
+            line-height: 1;
+        }
+
+        .flip-icon-v {
+            display: inline-block;
+            transform: rotate(90deg);
         }
 
         /* Primary Action Buttons */
@@ -494,7 +549,17 @@
                 </div>
                 <div id="thumbPreviewContainer" style="display: none;">
                     <label style="display:block; margin-bottom:4px; font-size:11px; color:var(--text-muted);">Source File Preview</label>
-                    <img id="thumbPreview" alt="Asset Thumbnail">
+                    <div class="thumb-preview-wrapper">
+                        <img id="thumbPreview" alt="Asset Thumbnail">
+                    </div>
+                    <div class="flip-toggle-group">
+                        <button type="button" id="flipHorizontalBtn" class="flip-btn" title="Mirror the source image left-to-right">
+                            <span class="flip-icon">⇋</span> Flip Horizontal
+                        </button>
+                        <button type="button" id="flipVerticalBtn" class="flip-btn" title="Mirror the source image top-to-bottom">
+                            <span class="flip-icon flip-icon-v">⇋</span> Flip Vertical
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -1092,8 +1157,54 @@
         const fusedCtx = fusedCanvas.getContext('2d');
 
         let croppedImageData = null;
+        let baseCropCanvas = null; // Unflipped cropped source, kept so flips can be re-applied non-destructively
+        let flipHorizontal = false;
+        let flipVertical = false;
         let initialBaseW = 30;
         let initialBaseH = 30;
+
+        const flipHorizontalBtn = document.getElementById('flipHorizontalBtn');
+        const flipVerticalBtn = document.getElementById('flipVerticalBtn');
+        const thumbPreview = document.getElementById('thumbPreview');
+
+        function buildFlippedCanvas(source, fh, fv) {
+            if (!fh && !fv) return source;
+            const c = document.createElement('canvas');
+            c.width = source.width;
+            c.height = source.height;
+            const fCtx = c.getContext('2d');
+            fCtx.save();
+            fCtx.translate(fh ? source.width : 0, fv ? source.height : 0);
+            fCtx.scale(fh ? -1 : 1, fv ? -1 : 1);
+            fCtx.drawImage(source, 0, 0);
+            fCtx.restore();
+            return c;
+        }
+
+        function updateThumbPreviewTransform() {
+            const scaleX = flipHorizontal ? -1 : 1;
+            const scaleY = flipVertical ? -1 : 1;
+            thumbPreview.style.transform = `scale(${scaleX}, ${scaleY})`;
+        }
+
+        function applyFlipState() {
+            if (!baseCropCanvas) return;
+            croppedImageData = buildFlippedCanvas(baseCropCanvas, flipHorizontal, flipVertical);
+            updateThumbPreviewTransform();
+            generatePattern();
+        }
+
+        flipHorizontalBtn.addEventListener('click', () => {
+            flipHorizontal = !flipHorizontal;
+            flipHorizontalBtn.classList.toggle('active', flipHorizontal);
+            applyFlipState();
+        });
+
+        flipVerticalBtn.addEventListener('click', () => {
+            flipVertical = !flipVertical;
+            flipVerticalBtn.classList.toggle('active', flipVertical);
+            applyFlipState();
+        });
 
         initPaletteData();
 
@@ -1595,7 +1706,9 @@
                     const cropCtx = cropCanvas.getContext('2d');
                     cropCtx.drawImage(img, minX, minY, croppedWidth, croppedHeight, 0, 0, croppedWidth, croppedHeight);
                     
-                    croppedImageData = cropCanvas;
+                    baseCropCanvas = cropCanvas;
+                    croppedImageData = buildFlippedCanvas(baseCropCanvas, flipHorizontal, flipVertical);
+                    updateThumbPreviewTransform();
 
                     const maxSize = 50;
                     let targetW, targetH;
