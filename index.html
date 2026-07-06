@@ -18,6 +18,7 @@
             --success-color: #28a745;
             --success-hover: #218838;
             --card-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            --canvas-max-width: 600px;
         }
 
         body.dark-mode {
@@ -40,6 +41,7 @@
             margin: 0;
             padding: 20px;
             transition: background-color 0.3s, color 0.3s;
+            box-sizing: border-box;
         }
         
         .header-container {
@@ -72,12 +74,78 @@
         /* Dashboard Core Layout */
         .dashboard-layout {
             display: grid;
-            grid-template-columns: 360px 1fr;
-            gap: 24px;
+            grid-template-columns: 1fr;
+            gap: 16px;
             width: 100%;
             max-width: 1400px;
             margin: 0 auto;
             align-items: start;
+        }
+
+        .resizer {
+            display: none;
+        }
+
+        /* Desktop Independent Two-Track Split Scrolling Viewport Setup */
+        @media (min-width: 993px) {
+            body {
+                height: 100vh;
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+                padding: 15px 20px;
+            }
+            .header-container {
+                margin-bottom: 15px;
+                flex-shrink: 0;
+            }
+            .dashboard-layout {
+                flex-grow: 1;
+                height: calc(100vh - 95px);
+                grid-template-columns: 360px 8px 1fr;
+                gap: 0;
+                overflow: hidden;
+                align-items: stretch;
+            }
+            .resizer {
+                display: block;
+                width: 8px;
+                cursor: col-resize;
+                background-color: transparent;
+                align-self: stretch;
+                position: relative;
+                z-index: 10;
+                transition: background-color 0.2s;
+            }
+            .resizer:hover, .resizer.dragging {
+                background-color: var(--border-color);
+            }
+            .resizer::after {
+                content: '';
+                position: absolute;
+                left: 3px;
+                top: 0;
+                bottom: 0;
+                width: 2px;
+                background-color: var(--border-color);
+                transition: background-color 0.2s;
+            }
+            .resizer:hover::after, .resizer.dragging::after {
+                background-color: var(--accent-color);
+            }
+            .sidebar {
+                height: 100%;
+                overflow-y: auto;
+                padding-right: 12px;
+                box-sizing: border-box;
+            }
+            .main-panel {
+                height: 100%;
+                overflow-y: auto;
+                padding-left: 12px;
+                padding-right: 8px;
+                box-sizing: border-box;
+            }
         }
 
         @media (max-width: 992px) {
@@ -210,7 +278,7 @@
             box-shadow: none;
         }
 
-        /* Main Panel & Output Canvas Layout Grid */
+        /* Main Panel & Output Canvas Layout Grid Stack */
         .main-panel {
             display: flex;
             flex-direction: column;
@@ -218,8 +286,8 @@
         }
 
         .canvas-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            display: flex;
+            flex-direction: column;
             gap: 20px;
             width: 100%;
         }
@@ -233,6 +301,10 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            max-width: var(--canvas-max-width, 100%);
+            width: 100%;
+            box-sizing: border-box;
+            transition: max-width 0.1s ease;
         }
 
         .canvas-container h2 {
@@ -252,6 +324,38 @@
             height: auto;
             border-radius: 4px;
             border: 1px solid var(--border-color);
+            cursor: crosshair;
+            touch-action: none;
+        }
+
+        /* Mode-specific overrides for Display / Fitting Config */
+        .canvas-grid.mode-scrollable .canvas-container {
+            overflow-x: auto;
+            align-items: flex-start;
+        }
+        .canvas-grid.mode-scrollable canvas {
+            max-width: none;
+            height: auto;
+        }
+
+        .canvas-grid.mode-fit-width .canvas-container {
+            align-items: center;
+        }
+        .canvas-grid.mode-fit-width canvas {
+            max-width: 100%;
+            width: 100%;
+            height: auto;
+        }
+
+        .canvas-grid.mode-fit-screen .canvas-container {
+            align-items: center;
+        }
+        .canvas-grid.mode-fit-screen canvas {
+            max-height: 28vh;
+            max-width: 100%;
+            width: auto;
+            height: auto;
+            object-fit: contain;
         }
 
         /* Data Matrix Table Styling */
@@ -263,6 +367,8 @@
             box-shadow: var(--card-shadow);
             display: flex;
             flex-direction: column;
+            width: 100%;
+            box-sizing: border-box;
         }
 
         .table-container h2 {
@@ -290,6 +396,14 @@
             font-weight: 600;
         }
 
+        .interactive-row {
+            cursor: pointer;
+            transition: background-color 0.15s ease;
+        }
+        .interactive-row:hover {
+            background-color: rgba(0, 123, 255, 0.08);
+        }
+
         .color-swatch {
             display: inline-block;
             width: 24px;
@@ -298,6 +412,57 @@
             vertical-align: middle;
             margin-right: 10px;
             border-radius: 4px;
+        }
+
+        /* Brush Indicator Styling */
+        .brush-preview-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 8px;
+            padding: 8px;
+            background: rgba(0,0,0,0.02);
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+        }
+
+        /* Quick Swatch Matrix Layout Configuration */
+        .quick-palette-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(28px, 1fr));
+            gap: 6px;
+            max-height: 140px;
+            overflow-y: auto;
+            padding: 8px;
+            background: rgba(0,0,0,0.02);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            margin-top: 8px;
+        }
+
+        body.dark-mode .quick-palette-grid {
+            background: rgba(255,255,255,0.02);
+        }
+
+        .quick-swatch {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 4px;
+            border: 1px solid rgba(0,0,0,0.2);
+            cursor: pointer;
+            transition: transform 0.12s ease;
+            position: relative;
+        }
+
+        .quick-swatch:hover {
+            transform: scale(1.15);
+            z-index: 2;
+        }
+
+        .quick-swatch.active-brush {
+            outline: 2px solid var(--accent-color);
+            outline-offset: 1px;
+            box-shadow: 0 0 4px var(--accent-color);
         }
     </style>
 </head>
@@ -363,8 +528,8 @@
                 <div class="control-group">
                     <label for="processingMode">Processing Mode</label>
                     <select id="processingMode">
-                        <option value="pixel" selected>👾 Pixel Art (Sharp Grid)</option>
-                        <option value="photo">📸 Photo / Gradient (Smooth)</option>
+                        <option value="pixel" selected>🎨 Pixel Art (Sharp Grid)</option>
+                        <option value="photo">🖼️ Photo / Gradient (Smooth)</option>
                     </select>
                 </div>
                 <div class="control-group">
@@ -406,7 +571,35 @@
             </div>
 
             <div class="control-card">
-                <h3>5. Export Configuration</h3>
+                <h3>5. Manual Pixel Override Editor</h3>
+                <div class="control-group">
+                    <label for="editorToolSelect">Touch Screen Tool Mode</label>
+                    <select id="editorToolSelect">
+                        <option value="paint" selected>🎨 Paint Mode (Left Click / Tap)</option>
+                        <option value="revert">🧼 Revert Mode (Return to Original)</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>Active Painting Brush</label>
+                    <div class="brush-preview-container">
+                        <span id="brushSwatch" class="color-swatch" style="background-color: #000000; margin-right: 0;"></span>
+                        <div>
+                            <span id="brushCode" style="font-weight: bold; font-size: 14px;">H7</span>
+                            <span id="brushHex" style="font-size: 11px; color: var(--text-muted); display: block;">#000000</span>
+                        </div>
+                    </div>
+                    
+                    <label style="margin-top: 12px; margin-bottom: 2px;">Quick Swap Palette</label>
+                    <div id="quickPaletteContainer" class="quick-palette-grid"></div>
+
+                    <span style="font-size: 11px; color: var(--text-muted); margin-top: 8px; line-height: 1.3;">
+                        💡 Tip: Right-Click cells directly on the canvas to instantly clear overrides. Swap ranges using Card 3 anytime.
+                    </span>
+                </div>
+            </div>
+
+            <div class="control-card">
+                <h3>6. Export Configuration</h3>
                 <div class="control-group download-group">
                     <label for="dlType">Export Format Target</label>
                     <select id="dlType">
@@ -420,9 +613,27 @@
 
         </aside>
 
+        <div class="resizer" id="layoutResizer"></div>
+
         <main class="main-panel">
             
-            <div class="canvas-grid">
+            <div class="control-card" style="margin-bottom: 0; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <label style="margin: 0; font-size: 14px;">Canvas Sizing View:</label>
+                    <select id="canvasSizingMode" style="padding: 6px 12px; font-size: 13px;">
+                        <option value="scrollable">Scrollable (Original Width)</option>
+                        <option value="fit-width" selected>Fit Layout Column Width</option>
+                        <option value="fit-screen">Fit Screen Height (Compact)</option>
+                    </select>
+                </div>
+                <div id="canvasSizeSliderContainer" style="display: flex; align-items: center; gap: 8px;">
+                    <label for="canvasSizeSlider" style="margin: 0; font-size: 13px;">Max Scale Bounds:</label>
+                    <input type="range" id="canvasSizeSlider" min="200" max="1400" value="650" style="padding: 0; width: 150px;">
+                    <span id="canvasSizeValue" style="font-size: 12px; font-weight: bold; width: 50px;">650px</span>
+                </div>
+            </div>
+
+            <div class="canvas-grid mode-fit-width">
                 <div class="canvas-container">
                     <h2>Base Grid (No Codes)</h2>
                     <canvas id="baseCanvas"></canvas>
@@ -540,7 +751,7 @@
 
             // D Series: Purples
             {code: 'D1', hex: '#AEB4F2'}, {code: 'D2', hex: '#858EDD'}, {code: 'D3', hex: '#2F54AF'}, {code: 'D4', hex: '#182A84'}, 
-            {code: 'D5', hex: '#B843C5'}, {code: 'D6', hex: '#AC7BDE'}, {code: 'D7', hex: '#8854B3'}, {code: 'E2D3FF', hex: '#E2D3FF'},
+            {code: 'D5', hex: '#B843C5'}, {code: 'D6', hex: '#AC7BDE'}, {code: 'D7', hex: '#8854B3'}, {code: 'D8', hex: '#E2D3FF'},
             {code: 'D9', hex: '#D5B9F8'}, {code: 'D10', hex: '#361851'}, {code: 'D11', hex: '#B9BAE1'}, {code: 'D12', hex: '#DE9AD4'},
             {code: 'D13', hex: '#B90095'}, {code: 'D14', hex: '#8B279B'}, {code: 'D15', hex: '#2F1F90'}, {code: 'D16', hex: '#E3E1EE'},
             {code: 'D17', hex: '#C4D4F6'}, {code: 'D18', hex: '#A45EC7'}, {code: 'D19', hex: '#D8C3D7'}, {code: 'D20', hex: '#9C32B2'},
@@ -684,6 +895,9 @@
         }
 
         let paletteData = [];
+        let userOverrides = {};
+        let activeBrushColor = 'H7';
+        let isDrawing = false;
 
         function initPaletteData() {
             const paletteType = document.getElementById('paletteSelect').value;
@@ -699,6 +913,51 @@
                     hsl: rgbToHsl(rgb.r, rgb.g, rgb.b),
                     cmyk: rgbToCmyk(rgb.r, rgb.g, rgb.b)
                 };
+            });
+
+            renderQuickPalette();
+            updateBrushUI();
+        }
+
+        function renderQuickPalette() {
+            const container = document.getElementById('quickPaletteContainer');
+            if (!container) return;
+            
+            container.innerHTML = '';
+            paletteData.forEach(color => {
+                const swatch = document.createElement('div');
+                swatch.className = 'quick-swatch';
+                swatch.style.backgroundColor = color.hex;
+                swatch.title = `${color.code} (${color.hex})`;
+                swatch.dataset.code = color.code;
+                
+                if (color.code === activeBrushColor) {
+                    swatch.classList.add('active-brush');
+                }
+                
+                swatch.addEventListener('click', () => {
+                    selectBrushFromTable(color.code);
+                });
+                
+                container.appendChild(swatch);
+            });
+        }
+
+        function updateBrushUI() {
+            const currentObj = paletteData.find(c => c.code === activeBrushColor) || paletteData.find(c => c.code === 'H7') || paletteData[0];
+            if (currentObj) {
+                activeBrushColor = currentObj.code;
+                document.getElementById('brushSwatch').style.backgroundColor = currentObj.hex;
+                document.getElementById('brushCode').innerText = currentObj.code;
+                document.getElementById('brushHex').innerText = currentObj.hex;
+            }
+
+            document.querySelectorAll('.quick-swatch').forEach(swatch => {
+                if (swatch.dataset.code === activeBrushColor) {
+                    swatch.classList.add('active-brush');
+                } else {
+                    swatch.classList.remove('active-brush');
+                }
             });
         }
 
@@ -773,13 +1032,11 @@
                         break;
                 }
 
-                // [Optimization A] H7 Magnetic Gravity Bias
                 if (color.code === 'H7' && h7Gravity > 0) {
                     const algorithmFactor = (algorithm === 'cielab76' || algorithm === 'hsv' || algorithm === 'hsl' || algorithm === 'cmyk') ? 0.35 : 1.8;
                     distance -= (h7Gravity * algorithmFactor);
                 }
 
-                // [Optimization B] Spatial Context Range Optimization (Neighborhood Bias)
                 if (color.code !== 'H7') {
                     if (color.code === leftNeighborCode || color.code === topNeighborCode) {
                         const biasWeight = (algorithm === 'cielab76' || algorithm === 'hsv' || algorithm === 'hsl' || algorithm === 'cmyk') ? 2.2 : 10.5;
@@ -820,6 +1077,15 @@
         const thresholdLabel = document.getElementById('thresholdLabel');
         const h7GravityInput = document.getElementById('h7Gravity');
         const gravityLabel = document.getElementById('gravityLabel');
+        const editorToolSelect = document.getElementById('editorToolSelect');
+
+        // Layout Resizing & Sizing Elements
+        const layoutResizer = document.getElementById('layoutResizer');
+        const dashboardLayout = document.querySelector('.dashboard-layout');
+        const canvasSizingMode = document.getElementById('canvasSizingMode');
+        const canvasSizeSlider = document.getElementById('canvasSizeSlider');
+        const canvasSizeValue = document.getElementById('canvasSizeValue');
+        const canvasGrid = document.querySelector('.canvas-grid');
 
         const ctx = outputCanvas.getContext('2d');
         const baseCtx = baseCanvas.getContext('2d');
@@ -829,10 +1095,81 @@
         let initialBaseW = 30;
         let initialBaseH = 30;
 
-        // Initialize active palette range mapping data
         initPaletteData();
 
-        // Active Core Pattern Generation Logic Block
+        /* --- DRAGGABLE SIDEBAR PARTITION LOGIC --- */
+        if (layoutResizer && dashboardLayout) {
+            layoutResizer.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                layoutResizer.classList.add('dragging');
+                document.addEventListener('mousemove', handleLayoutMove);
+                document.addEventListener('mouseup', handleLayoutUp);
+            });
+
+            layoutResizer.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 1) {
+                    layoutResizer.classList.add('dragging');
+                    document.addEventListener('touchmove', handleLayoutTouchMove, { passive: false });
+                    document.addEventListener('touchend', handleLayoutTouchEnd);
+                }
+            });
+
+            function handleLayoutMove(e) {
+                const bounds = dashboardLayout.getBoundingClientRect();
+                const targetWidth = e.clientX - bounds.left;
+                if (targetWidth > 220 && targetWidth < 600) {
+                    dashboardLayout.style.gridTemplateColumns = `${targetWidth}px 8px 1fr`;
+                }
+            }
+
+            function handleLayoutTouchMove(e) {
+                if (e.touches.length === 1) {
+                    const bounds = dashboardLayout.getBoundingClientRect();
+                    const targetWidth = e.touches[0].clientX - bounds.left;
+                    if (targetWidth > 220 && targetWidth < 600) {
+                        dashboardLayout.style.gridTemplateColumns = `${targetWidth}px 8px 1fr`;
+                    }
+                    e.preventDefault();
+                }
+            }
+
+            function handleLayoutUp() {
+                layoutResizer.classList.remove('dragging');
+                document.removeEventListener('mousemove', handleLayoutMove);
+                document.removeEventListener('mouseup', handleLayoutUp);
+            }
+
+            function handleLayoutTouchEnd() {
+                layoutResizer.classList.remove('dragging');
+                document.removeEventListener('touchmove', handleLayoutTouchMove);
+                document.removeEventListener('touchend', handleLayoutTouchEnd);
+            }
+        }
+
+        /* --- CANVAS VIEWPORT DISPLAY FITTING ENGINE --- */
+        function adjustCanvasDisplaySizing() {
+            const chosenMode = canvasSizingMode.value;
+            const chosenSize = canvasSizeSlider.value;
+            
+            canvasSizeValue.innerText = `${chosenSize}px`;
+            
+            canvasGrid.classList.remove('mode-scrollable', 'mode-fit-width', 'mode-fit-screen');
+            canvasGrid.classList.add(`mode-${chosenMode}`);
+            
+            if (chosenMode === 'fit-width') {
+                document.documentElement.style.setProperty('--canvas-max-width', '100%');
+                canvasSizeSlider.disabled = true;
+            } else {
+                document.documentElement.style.setProperty('--canvas-max-width', `${chosenSize}px`);
+                canvasSizeSlider.disabled = false;
+            }
+        }
+
+        canvasSizingMode.addEventListener('change', adjustCanvasDisplaySizing);
+        canvasSizeSlider.addEventListener('input', adjustCanvasDisplaySizing);
+        adjustCanvasDisplaySizing(); // Apply column-fit sizing limits immediately
+
+        /* --- ENGINE PATTERN GENERATOR --- */
         function generatePattern() {
             if (!croppedImageData) return;
 
@@ -962,31 +1299,36 @@
                     }
 
                     let matchedColor;
+                    const overrideKey = `${y},${x}`;
 
-                    // [Optimization A] Layer 1 - Hard Threshold Cutoff Calculation
-                    const hardCutoffLimit = h7GravityVal * 0.72;
-                    const matchesHardCutoff = (h7GravityVal > 0) && (r < hardCutoffLimit && g < hardCutoffLimit && b < hardCutoffLimit);
+                    if (userOverrides[overrideKey]) {
+                        matchedColor = paletteData.find(color => color.code === userOverrides[overrideKey]);
+                    }
 
-                    if ((activeOutlineMode === 'spatial' || activeOutlineMode === 'sobel') && edgeMap[y][x]) {
-                        matchedColor = blackBeadColor;
-                    } else if (activeOutlineMode === 'luminance' && (0.299*r + 0.587*g + 0.114*b) < currentThreshold) {
-                        matchedColor = blackBeadColor;
-                    } else if (matchesHardCutoff) {
-                        matchedColor = blackBeadColor;
-                    } else {
-                        if (r < 35 && g < 35 && b < 35) {
+                    if (!matchedColor) {
+                        const hardCutoffLimit = h7GravityVal * 0.72;
+                        const matchesHardCutoff = (h7GravityVal > 0) && (r < hardCutoffLimit && g < hardCutoffLimit && b < hardCutoffLimit);
+
+                        if ((activeOutlineMode === 'spatial' || activeOutlineMode === 'sobel') && edgeMap[y][x]) {
+                            matchedColor = blackBeadColor;
+                        } else if (activeOutlineMode === 'luminance' && (0.299*r + 0.587*g + 0.114*b) < currentThreshold) {
+                            matchedColor = blackBeadColor;
+                        } else if (matchesHardCutoff) {
                             matchedColor = blackBeadColor;
                         } else {
-                            const maxVal = Math.max(r, g, b);
-                            const minVal = Math.min(r, g, b);
-                            const saturationSpread = maxVal - minVal;
-                            const restrictToGrey = (saturationSpread < 18);
-                            
-                            // Extract contextual coordinates for spatial continuity checks
-                            const leftCode = (x > 0) ? assignedMatrix[y][x - 1] : null;
-                            const topCode = (y > 0) ? assignedMatrix[y - 1][x] : null;
+                            if (r < 35 && g < 35 && b < 35) {
+                                matchedColor = blackBeadColor;
+                            } else {
+                                const maxVal = Math.max(r, g, b);
+                                const minVal = Math.min(r, g, b);
+                                const saturationSpread = maxVal - minVal;
+                                const restrictToGrey = (saturationSpread < 18);
+                                
+                                const leftCode = (x > 0) ? assignedMatrix[y][x - 1] : null;
+                                const topCode = (y > 0) ? assignedMatrix[y - 1][x] : null;
 
-                            matchedColor = findClosestColor(r, g, b, selectedAlgo, restrictToGrey, h7GravityVal, leftCode, topCode);
+                                matchedColor = findClosestColor(r, g, b, selectedAlgo, restrictToGrey, h7GravityVal, leftCode, topCode);
+                            }
                         }
                     }
                     
@@ -1062,13 +1404,83 @@
             downloadBtn.disabled = false;
         }
 
-        // Palette selector change event handler logic
+        function handleGridPointerEvent(canvas, clientX, clientY, forceRevert = false) {
+            if (!croppedImageData) return;
+
+            const gridW = parseInt(gridWidthInput.value);
+            const gridH = parseInt(gridHeightInput.value);
+            const cellSize = 24;
+            const axisOffset = (canvas === fusedCanvas) ? 0 : 30;
+
+            const rect = canvas.getBoundingClientRect();
+            const canvasX = (clientX - rect.left) * (canvas.width / rect.width);
+            const canvasY = (clientY - rect.top) * (canvas.height / rect.height);
+
+            const x = Math.floor((canvasX - axisOffset) / cellSize);
+            const y = Math.floor((canvasY - axisOffset) / cellSize);
+
+            if (x >= 0 && x < gridW && y >= 0 && y < gridH) {
+                const key = `${y},${x}`;
+                const isRevertMode = forceRevert || (editorToolSelect.value === 'revert');
+
+                if (isRevertMode) {
+                    if (userOverrides[key]) {
+                        delete userOverrides[key];
+                        generatePattern();
+                    }
+                } else {
+                    if (userOverrides[key] !== activeBrushColor) {
+                        userOverrides[key] = activeBrushColor;
+                        generatePattern();
+                    }
+                }
+            }
+        }
+
+        [baseCanvas, outputCanvas, fusedCanvas].forEach(canvas => {
+            canvas.addEventListener('mousedown', (e) => {
+                if (e.button === 0) { 
+                    isDrawing = true;
+                    handleGridPointerEvent(canvas, e.clientX, e.clientY);
+                } else if (e.button === 2) { 
+                    handleGridPointerEvent(canvas, e.clientX, e.clientY, true);
+                }
+            });
+
+            canvas.addEventListener('mousemove', (e) => {
+                if (isDrawing) {
+                    handleGridPointerEvent(canvas, e.clientX, e.clientY);
+                }
+            });
+
+            canvas.addEventListener('contextmenu', (e) => {
+                e.preventDefault(); 
+            });
+
+            canvas.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 1) {
+                    isDrawing = true;
+                    handleGridPointerEvent(canvas, e.touches[0].clientX, e.touches[0].clientY);
+                    e.preventDefault();
+                }
+            }, { passive: false });
+
+            canvas.addEventListener('touchmove', (e) => {
+                if (isDrawing && e.touches.length === 1) {
+                    handleGridPointerEvent(canvas, e.touches[0].clientX, e.touches[0].clientY);
+                    e.preventDefault();
+                }
+            }, { passive: false });
+        });
+
+        window.addEventListener('mouseup', () => { isDrawing = false; });
+        window.addEventListener('touchend', () => { isDrawing = false; });
+
         paletteSelectInput.addEventListener('change', () => {
             initPaletteData();
             generatePattern();
         });
 
-        // Dark Mode Logic
         darkModeToggle.addEventListener('change', (e) => {
             document.body.classList.toggle('dark-mode', e.target.checked);
         });
@@ -1114,13 +1526,19 @@
             if (scale > 0 && croppedImageData) {
                 gridWidthInput.value = Math.max(5, Math.round(initialBaseW * scale));
                 gridHeightInput.value = Math.max(5, Math.round(initialBaseH * scale));
+                userOverrides = {}; 
                 generatePattern();
             }
         });
 
-        // Event bindings for custom explicit dimension updates
-        gridWidthInput.addEventListener('input', generatePattern);
-        gridHeightInput.addEventListener('input', generatePattern);
+        gridWidthInput.addEventListener('input', () => {
+            userOverrides = {};
+            generatePattern();
+        });
+        gridHeightInput.addEventListener('input', () => {
+            userOverrides = {};
+            generatePattern();
+        });
         processingModeSelect.addEventListener('change', generatePattern);
         colorAlgoSelect.addEventListener('change', generatePattern);
 
@@ -1130,7 +1548,6 @@
 
             const reader = new FileReader();
             reader.onload = (event) => {
-                // Asset thumbnail rendering configuration
                 const thumbImg = document.getElementById('thumbPreview');
                 thumbImg.src = event.target.result;
                 document.getElementById('thumbPreviewContainer').style.display = 'block';
@@ -1197,6 +1614,7 @@
                     gridWidthInput.value = targetW;
                     gridHeightInput.value = targetH;
                     
+                    userOverrides = {}; 
                     generatePattern();
                 };
                 img.src = event.target.result;
@@ -1205,7 +1623,6 @@
         });
 
         autoCropInput.addEventListener('change', () => {
-            // Re-trigger the image layout crop cycle if an image asset is currently active
             if (imageUpload.files && imageUpload.files[0]) {
                 const event = new Event('change');
                 imageUpload.dispatchEvent(event);
@@ -1238,7 +1655,7 @@
             
             sortedCounts.forEach(([code, data]) => {
                 tableHTML += `
-                    <tr>
+                    <tr class="interactive-row" onclick="selectBrushFromTable('${code}')">
                         <td><strong>${code}</strong></td>
                         <td><span class="color-swatch" style="background-color: ${data.hex}"></span></td>
                         <td>${data.hex}</td>
@@ -1254,6 +1671,12 @@
             
             content.innerHTML = tableHTML;
             container.style.display = 'flex';
+        }
+
+        function selectBrushFromTable(code) {
+            activeBrushColor = code;
+            updateBrushUI();
+            editorToolSelect.value = 'paint';
         }
 
         function adjustColorBrightness(hex, percent) {
