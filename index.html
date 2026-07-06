@@ -370,8 +370,8 @@
                 <div class="control-group">
                     <label for="colorAlgo">Matching Algorithm</label>
                     <select id="colorAlgo">
-                        <option value="redmean">1. Redmean (Perceptual Balance)</option>
-                        <option value="cielab76" selected>2. CIE76 (Pro Visual Perception)</option>
+                        <option value="redmean" selected>1. Redmean (Perceptual Balance)</option>
+                        <option value="cielab76">2. CIE76 (Pro Visual Perception)</option>
                         <option value="euclidean">3. Euclidean (True RGB)</option>
                         <option value="weighted_rgb">4. Weighted RGB (Classic Luminescence)</option>
                         <option value="luma">5. Luma (YIQ Contrast)</option>
@@ -399,13 +399,14 @@
                     <label id="thresholdLabel" for="outlineThreshold">Sensitivity (N/A)</label>
                     <input type="range" id="outlineThreshold" min="0" max="255" value="50" disabled style="padding: 4px 0;">
                 </div>
+                <div class="control-group" style="margin-top: 8px; border-top: 1px dashed var(--border-color); padding-top: 12px;">
+                    <label id="gravityLabel" for="h7Gravity">H7 Edge Snap / Gravity (25)</label>
+                    <input type="range" id="h7Gravity" min="0" max="100" value="25" style="padding: 4px 0;">
+                </div>
             </div>
 
             <div class="control-card">
-                <h3>5. Execution & Export</h3>
-                <div class="control-group" style="margin-bottom: 14px;">
-                    <button id="generateBtn">Generate Pattern</button>
-                </div>
+                <h3>5. Export Configuration</h3>
                 <div class="control-group download-group">
                     <label for="dlType">Export Format Target</label>
                     <select id="dlType">
@@ -539,11 +540,11 @@
 
             // D Series: Purples
             {code: 'D1', hex: '#AEB4F2'}, {code: 'D2', hex: '#858EDD'}, {code: 'D3', hex: '#2F54AF'}, {code: 'D4', hex: '#182A84'}, 
-            {code: 'D5', hex: '#B843C5'}, {code: 'D6', hex: '#AC7BDE'}, {code: 'D7', hex: '#8854B3'}, {code: 'D8', hex: '#E2D3FF'},
+            {code: 'D5', hex: '#B843C5'}, {code: 'D6', hex: '#AC7BDE'}, {code: 'D7', hex: '#8854B3'}, {code: 'E2D3FF', hex: '#E2D3FF'},
             {code: 'D9', hex: '#D5B9F8'}, {code: 'D10', hex: '#361851'}, {code: 'D11', hex: '#B9BAE1'}, {code: 'D12', hex: '#DE9AD4'},
             {code: 'D13', hex: '#B90095'}, {code: 'D14', hex: '#8B279B'}, {code: 'D15', hex: '#2F1F90'}, {code: 'D16', hex: '#E3E1EE'},
             {code: 'D17', hex: '#C4D4F6'}, {code: 'D18', hex: '#A45EC7'}, {code: 'D19', hex: '#D8C3D7'}, {code: 'D20', hex: '#9C32B2'},
-            {code: 'D21', hex: '#9A009B'}, {code: 'D22', hex: '#333A95'}, {code: 'D23', hex: '#EBDAFC'}, {code: 'D24', hex: '#7786E5'},
+            {code: 'D21', hex: '#9A009B'}, {code: 'D22', hex: '#333A95'}, {code: 'D23', hex: '#EBDAFC'}, {code: '7786E5', hex: '#7786E5'},
             {code: 'D25', hex: '#494FC7'}, {code: 'D26', hex: '#DFC2F8'},
 
             // E Series: Pinks
@@ -701,7 +702,7 @@
             });
         }
 
-        function findClosestColor(r, g, b, algorithm, restrictToGrey = false) {
+        function findClosestColor(r, g, b, algorithm, restrictToGrey = false, h7Gravity = 0, leftNeighborCode = null, topNeighborCode = null) {
             let minDistance = Infinity;
             let closestColor = paletteData[0];
             
@@ -772,6 +773,20 @@
                         break;
                 }
 
+                // [Optimization A] H7 Magnetic Gravity Bias
+                if (color.code === 'H7' && h7Gravity > 0) {
+                    const algorithmFactor = (algorithm === 'cielab76' || algorithm === 'hsv' || algorithm === 'hsl' || algorithm === 'cmyk') ? 0.35 : 1.8;
+                    distance -= (h7Gravity * algorithmFactor);
+                }
+
+                // [Optimization B] Spatial Context Range Optimization (Neighborhood Bias)
+                if (color.code !== 'H7') {
+                    if (color.code === leftNeighborCode || color.code === topNeighborCode) {
+                        const biasWeight = (algorithm === 'cielab76' || algorithm === 'hsv' || algorithm === 'hsl' || algorithm === 'cmyk') ? 2.2 : 10.5;
+                        distance -= biasWeight; 
+                    }
+                }
+
                 if (distance < minDistance) {
                     minDistance = distance;
                     closestColor = color;
@@ -788,7 +803,7 @@
         // Setup DOM Elements
         const darkModeToggle = document.getElementById('darkModeToggle');
         const imageUpload = document.getElementById('imageUpload');
-        const generateBtn = document.getElementById('generateBtn');
+        const autoCropInput = document.getElementById('autoCrop');
         const downloadBtn = document.getElementById('downloadBtn');
         const outputCanvas = document.getElementById('outputCanvas');
         const baseCanvas = document.getElementById('baseCanvas');
@@ -798,10 +813,13 @@
         const gridHeightInput = document.getElementById('gridHeight');
         const processingModeSelect = document.getElementById('processingMode');
         const paletteSelectInput = document.getElementById('paletteSelect');
+        const colorAlgoSelect = document.getElementById('colorAlgo');
         
         const outlineModeSelect = document.getElementById('outlineMode');
         const outlineThresholdInput = document.getElementById('outlineThreshold');
         const thresholdLabel = document.getElementById('thresholdLabel');
+        const h7GravityInput = document.getElementById('h7Gravity');
+        const gravityLabel = document.getElementById('gravityLabel');
 
         const ctx = outputCanvas.getContext('2d');
         const baseCtx = baseCanvas.getContext('2d');
@@ -814,142 +832,16 @@
         // Initialize active palette range mapping data
         initPaletteData();
 
-        // Palette selector change event handler logic
-        paletteSelectInput.addEventListener('change', () => {
-            initPaletteData();
-        });
-
-        // Dark Mode Logic
-        darkModeToggle.addEventListener('change', (e) => {
-            document.body.classList.toggle('dark-mode', e.target.checked);
-        });
-
-        outlineModeSelect.addEventListener('change', () => {
-            const mode = outlineModeSelect.value;
-            if (mode === 'none' || mode === 'spatial') {
-                outlineThresholdInput.disabled = true;
-                thresholdLabel.innerText = "Sensitivity (N/A)";
-            } else if (mode === 'sobel') {
-                outlineThresholdInput.disabled = false;
-                outlineThresholdInput.min = "10";
-                outlineThresholdInput.max = "200";
-                outlineThresholdInput.value = "50";
-                thresholdLabel.innerText = `Edge Cutoff (${outlineThresholdInput.value})`;
-            } else if (mode === 'luminance') {
-                outlineThresholdInput.disabled = false;
-                outlineThresholdInput.min = "0";
-                outlineThresholdInput.max = "255";
-                outlineThresholdInput.value = "60";
-                thresholdLabel.innerText = `Darkness Bias (${outlineThresholdInput.value})`;
-            }
-        });
-
-        outlineThresholdInput.addEventListener('input', (e) => {
-            const mode = outlineModeSelect.value;
-            if (mode === 'sobel') {
-                thresholdLabel.innerText = `Edge Cutoff (${e.target.value})`;
-            } else if (mode === 'luminance') {
-                thresholdLabel.innerText = `Darkness Bias (${e.target.value})`;
-            }
-        });
-
-        scalePercentInput.addEventListener('input', (e) => {
-            const scale = parseFloat(e.target.value) / 100;
-            if (scale > 0 && croppedImageData) {
-                gridWidthInput.value = Math.max(5, Math.round(initialBaseW * scale));
-                gridHeightInput.value = Math.max(5, Math.round(initialBaseH * scale));
-            }
-        });
-
-        imageUpload.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                // Asset thumbnail rendering configuration
-                const thumbImg = document.getElementById('thumbPreview');
-                thumbImg.src = event.target.result;
-                document.getElementById('thumbPreviewContainer').style.display = 'block';
-
-                const img = new Image();
-                img.onload = () => {
-                    const tempCanvas = document.createElement('canvas');
-                    tempCanvas.width = img.width;
-                    tempCanvas.height = img.height;
-                    const tempCtx = tempCanvas.getContext('2d');
-                    tempCtx.drawImage(img, 0, 0);
-                    
-                    const imgData = tempCtx.getImageData(0, 0, img.width, img.height);
-                    const data = imgData.data;
-                    
-                    let minX = 0, minY = 0, maxX = img.width - 1, maxY = img.height - 1;
-                    
-                    if (document.getElementById('autoCrop').checked) {
-                        minX = img.width; minY = img.height; maxX = 0; maxY = 0;
-                        for (let y = 0; y < img.height; y++) {
-                            for (let x = 0; x < img.width; x++) {
-                                const i = (y * img.width + x) * 4;
-                                const r = data[i], g = data[i+1], b = data[i+2], a = data[i+3];
-                                
-                                const isWhite = (r > 240 && g > 240 && b > 240);
-                                if (a > 50 && !isWhite) {
-                                    if (x < minX) minX = x;
-                                    if (x > maxX) maxX = x;
-                                    if (y < minY) minY = y;
-                                    if (y > maxY) maxY = y;
-                                }
-                            }
-                        }
-                        if (maxX < minX || maxY < minY) {
-                            minX = 0; minY = 0; maxX = img.width - 1; maxY = img.height - 1;
-                        }
-                    }
-
-                    const croppedWidth = maxX - minX + 1;
-                    const croppedHeight = maxY - minY + 1;
-
-                    const cropCanvas = document.createElement('canvas');
-                    cropCanvas.width = croppedWidth;
-                    cropCanvas.height = croppedHeight;
-                    const cropCtx = cropCanvas.getContext('2d');
-                    cropCtx.drawImage(img, minX, minY, croppedWidth, croppedHeight, 0, 0, croppedWidth, croppedHeight);
-                    
-                    croppedImageData = cropCanvas;
-
-                    const maxSize = 50;
-                    let targetW, targetH;
-                    if (croppedWidth > croppedHeight) {
-                        targetW = maxSize;
-                        targetH = Math.max(5, Math.round((croppedHeight / croppedWidth) * maxSize));
-                    } else {
-                        targetH = maxSize;
-                        targetW = Math.max(5, Math.round((croppedWidth / croppedHeight) * maxSize));
-                    }
-
-                    initialBaseW = targetW;
-                    initialBaseH = targetH;
-                    scalePercentInput.value = 100;
-
-                    gridWidthInput.value = targetW;
-                    gridHeightInput.value = targetH;
-                };
-                img.src = event.target.result;
-            };
-            reader.readAsDataURL(file);
-        });
-
-        generateBtn.addEventListener('click', () => {
-            if (!croppedImageData) {
-                alert("Please upload an image first.");
-                return;
-            }
+        // Active Core Pattern Generation Logic Block
+        function generatePattern() {
+            if (!croppedImageData) return;
 
             const gridW = parseInt(gridWidthInput.value);
             const gridH = parseInt(gridHeightInput.value);
-            const selectedAlgo = document.getElementById('colorAlgo').value;
+            const selectedAlgo = colorAlgoSelect.value;
             const activeOutlineMode = outlineModeSelect.value;
             const currentThreshold = parseFloat(outlineThresholdInput.value);
+            const h7GravityVal = parseFloat(h7GravityInput.value);
             const isPixelMode = processingModeSelect.value === 'pixel';
 
             const cellSize = 24; 
@@ -1049,6 +941,7 @@
             });
 
             let beadCounts = {};
+            let assignedMatrix = Array(gridH).fill().map(() => Array(gridW).fill(null));
 
             for (let y = 0; y < gridH; y++) {
                 for (let x = 0; x < gridW; x++) {
@@ -1070,9 +963,15 @@
 
                     let matchedColor;
 
+                    // [Optimization A] Layer 1 - Hard Threshold Cutoff Calculation
+                    const hardCutoffLimit = h7GravityVal * 0.72;
+                    const matchesHardCutoff = (h7GravityVal > 0) && (r < hardCutoffLimit && g < hardCutoffLimit && b < hardCutoffLimit);
+
                     if ((activeOutlineMode === 'spatial' || activeOutlineMode === 'sobel') && edgeMap[y][x]) {
                         matchedColor = blackBeadColor;
                     } else if (activeOutlineMode === 'luminance' && (0.299*r + 0.587*g + 0.114*b) < currentThreshold) {
+                        matchedColor = blackBeadColor;
+                    } else if (matchesHardCutoff) {
                         matchedColor = blackBeadColor;
                     } else {
                         if (r < 35 && g < 35 && b < 35) {
@@ -1082,10 +981,17 @@
                             const minVal = Math.min(r, g, b);
                             const saturationSpread = maxVal - minVal;
                             const restrictToGrey = (saturationSpread < 18);
-                            matchedColor = findClosestColor(r, g, b, selectedAlgo, restrictToGrey);
+                            
+                            // Extract contextual coordinates for spatial continuity checks
+                            const leftCode = (x > 0) ? assignedMatrix[y][x - 1] : null;
+                            const topCode = (y > 0) ? assignedMatrix[y - 1][x] : null;
+
+                            matchedColor = findClosestColor(r, g, b, selectedAlgo, restrictToGrey, h7GravityVal, leftCode, topCode);
                         }
                     }
                     
+                    assignedMatrix[y][x] = matchedColor.code;
+
                     if (!beadCounts[matchedColor.code]) {
                         beadCounts[matchedColor.code] = {
                             hex: matchedColor.hex,
@@ -1154,6 +1060,156 @@
 
             generateBeadTable(beadCounts);
             downloadBtn.disabled = false;
+        }
+
+        // Palette selector change event handler logic
+        paletteSelectInput.addEventListener('change', () => {
+            initPaletteData();
+            generatePattern();
+        });
+
+        // Dark Mode Logic
+        darkModeToggle.addEventListener('change', (e) => {
+            document.body.classList.toggle('dark-mode', e.target.checked);
+        });
+
+        outlineModeSelect.addEventListener('change', () => {
+            const mode = outlineModeSelect.value;
+            if (mode === 'none' || mode === 'spatial') {
+                outlineThresholdInput.disabled = true;
+                thresholdLabel.innerText = "Sensitivity (N/A)";
+            } else if (mode === 'sobel') {
+                outlineThresholdInput.disabled = false;
+                outlineThresholdInput.min = "10";
+                outlineThresholdInput.max = "200";
+                outlineThresholdInput.value = "50";
+                thresholdLabel.innerText = `Edge Cutoff (${outlineThresholdInput.value})`;
+            } else if (mode === 'luminance') {
+                outlineThresholdInput.disabled = false;
+                outlineThresholdInput.min = "0";
+                outlineThresholdInput.max = "255";
+                outlineThresholdInput.value = "60";
+                thresholdLabel.innerText = `Darkness Bias (${outlineThresholdInput.value})`;
+            }
+            generatePattern();
+        });
+
+        outlineThresholdInput.addEventListener('input', (e) => {
+            const mode = outlineModeSelect.value;
+            if (mode === 'sobel') {
+                thresholdLabel.innerText = `Edge Cutoff (${e.target.value})`;
+            } else if (mode === 'luminance') {
+                thresholdLabel.innerText = `Darkness Bias (${e.target.value})`;
+            }
+            generatePattern();
+        });
+
+        h7GravityInput.addEventListener('input', (e) => {
+            gravityLabel.innerText = `H7 Edge Snap / Gravity (${e.target.value})`;
+            generatePattern();
+        });
+
+        scalePercentInput.addEventListener('input', (e) => {
+            const scale = parseFloat(e.target.value) / 100;
+            if (scale > 0 && croppedImageData) {
+                gridWidthInput.value = Math.max(5, Math.round(initialBaseW * scale));
+                gridHeightInput.value = Math.max(5, Math.round(initialBaseH * scale));
+                generatePattern();
+            }
+        });
+
+        // Event bindings for custom explicit dimension updates
+        gridWidthInput.addEventListener('input', generatePattern);
+        gridHeightInput.addEventListener('input', generatePattern);
+        processingModeSelect.addEventListener('change', generatePattern);
+        colorAlgoSelect.addEventListener('change', generatePattern);
+
+        imageUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                // Asset thumbnail rendering configuration
+                const thumbImg = document.getElementById('thumbPreview');
+                thumbImg.src = event.target.result;
+                document.getElementById('thumbPreviewContainer').style.display = 'block';
+
+                const img = new Image();
+                img.onload = () => {
+                    const tempCanvas = document.createElement('canvas');
+                    tempCanvas.width = img.width;
+                    tempCanvas.height = img.height;
+                    const tempCtx = tempCanvas.getContext('2d');
+                    tempCtx.drawImage(img, 0, 0);
+                    
+                    const imgData = tempCtx.getImageData(0, 0, img.width, img.height);
+                    const data = imgData.data;
+                    
+                    let minX = 0, minY = 0, maxX = img.width - 1, maxY = img.height - 1;
+                    
+                    if (autoCropInput.checked) {
+                        minX = img.width; minY = img.height; maxX = 0; maxY = 0;
+                        for (let y = 0; y < img.height; y++) {
+                            for (let x = 0; x < img.width; x++) {
+                                const i = (y * img.width + x) * 4;
+                                const r = data[i], g = data[i+1], b = data[i+2], a = data[i+3];
+                                
+                                const isWhite = (r > 240 && g > 240 && b > 240);
+                                if (a > 50 && !isWhite) {
+                                    if (x < minX) minX = x;
+                                    if (x > maxX) maxX = x;
+                                    if (y < minY) minY = y;
+                                    if (y > maxY) maxY = y;
+                                }
+                            }
+                        }
+                        if (maxX < minX || maxY < minY) {
+                            minX = 0; minY = 0; maxX = img.width - 1; maxY = img.height - 1;
+                        }
+                    }
+
+                    const croppedWidth = maxX - minX + 1;
+                    const croppedHeight = maxY - minY + 1;
+
+                    const cropCanvas = document.createElement('canvas');
+                    cropCanvas.width = croppedWidth;
+                    cropCanvas.height = croppedHeight;
+                    const cropCtx = cropCanvas.getContext('2d');
+                    cropCtx.drawImage(img, minX, minY, croppedWidth, croppedHeight, 0, 0, croppedWidth, croppedHeight);
+                    
+                    croppedImageData = cropCanvas;
+
+                    const maxSize = 50;
+                    let targetW, targetH;
+                    if (croppedWidth > croppedHeight) {
+                        targetW = maxSize;
+                        targetH = Math.max(5, Math.round((croppedHeight / croppedWidth) * maxSize));
+                    } else {
+                        targetH = maxSize;
+                        targetW = Math.max(5, Math.round((croppedWidth / croppedHeight) * maxSize));
+                    }
+
+                    initialBaseW = targetW;
+                    initialBaseH = targetH;
+                    scalePercentInput.value = 100;
+
+                    gridWidthInput.value = targetW;
+                    gridHeightInput.value = targetH;
+                    
+                    generatePattern();
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        autoCropInput.addEventListener('change', () => {
+            // Re-trigger the image layout crop cycle if an image asset is currently active
+            if (imageUpload.files && imageUpload.files[0]) {
+                const event = new Event('change');
+                imageUpload.dispatchEvent(event);
+            }
         });
 
         function generateBeadTable(counts) {
