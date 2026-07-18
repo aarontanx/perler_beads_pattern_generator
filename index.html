@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Perler Bead Pattern Generator Pro</title>
+    <title>Perler Beads Pattern Generator</title>
     <style>
         :root {
             --bg-color: #f0f2f5;
@@ -601,24 +601,462 @@
             outline-offset: 1px;
             box-shadow: 0 0 4px var(--accent-color);
         }
+
+        /* ===================== INFO ICON + POPOVER ===================== */
+        .card-title-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 6px;
+            margin: 0 0 14px 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .card-title-row h3 {
+            margin: 0;
+            border-bottom: none;
+            padding-bottom: 0;
+            flex-shrink: 1;
+        }
+
+        .card-title-left {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            min-width: 0;
+        }
+
+        .info-icon {
+            flex-shrink: 0;
+            width: 18px;
+            height: 18px;
+            min-width: 18px;
+            border-radius: 50%;
+            border: 1.5px solid var(--text-muted);
+            color: var(--text-muted);
+            background: transparent;
+            font-size: 11px;
+            font-weight: 700;
+            font-style: normal;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            cursor: pointer;
+            box-shadow: none;
+            transition: all 0.15s ease;
+            font-family: Georgia, serif;
+        }
+
+        .control-label-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 6px;
+        }
+
+        .control-label-row label {
+            margin-bottom: 0;
+        }
+
+        .info-icon:hover, .info-icon.active {
+            background-color: var(--accent-color);
+            border-color: var(--accent-color);
+            color: #ffffff;
+        }
+
+        .chevron-btn {
+            flex-shrink: 0;
+            width: 26px;
+            height: 26px;
+            min-width: 26px;
+            border-radius: 6px;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            box-shadow: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            font-size: 12px;
+            transition: transform 0.2s ease, background-color 0.15s ease;
+        }
+
+        .chevron-btn:hover {
+            background-color: rgba(0,0,0,0.05);
+        }
+
+        body.dark-mode .chevron-btn:hover {
+            background-color: rgba(255,255,255,0.08);
+        }
+
+        .control-card.collapsed .chevron-btn {
+            transform: rotate(-90deg);
+        }
+
+        .card-body {
+            overflow: hidden;
+        }
+
+        .control-card.collapsed .card-body {
+            display: none;
+        }
+
+        .canvas-header-row .info-icon {
+            margin-left: 2px;
+        }
+
+        .canvas-title-left {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            min-width: 0;
+        }
+
+        #infoPopover {
+            position: fixed;
+            z-index: 1300;
+            max-width: 320px;
+            max-height: 70vh;
+            overflow-y: auto;
+            width: max-content;
+            background-color: var(--container-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+            padding: 12px 14px;
+            font-size: 13px;
+            line-height: 1.45;
+            display: none;
+            opacity: 0;
+            transform: translateY(-4px);
+            transition: opacity 0.15s ease, transform 0.15s ease;
+        }
+
+        #infoPopover.visible {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        #infoPopover .popover-head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 4px;
+        }
+
+        #infoPopover .popover-title {
+            font-weight: 700;
+            font-size: 13px;
+            color: var(--accent-color);
+        }
+
+        #infoPopover .popover-close {
+            flex-shrink: 0;
+            width: 22px;
+            height: 22px;
+            min-width: 22px;
+            border-radius: 50%;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            box-shadow: none;
+            font-size: 15px;
+            line-height: 1;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: -2px -2px 0 0;
+        }
+
+        #infoPopover .popover-close:hover {
+            background-color: rgba(0,0,0,0.08);
+            color: var(--text-color);
+        }
+
+        body.dark-mode #infoPopover .popover-close:hover {
+            background-color: rgba(255,255,255,0.1);
+        }
+
+        #infoPopover p {
+            margin: 0;
+            color: var(--text-color);
+            white-space: pre-line;
+        }
+
+        /* ===================== NUMBER STEPPER CONTROLS ===================== */
+        .stepper-group {
+            display: flex;
+            align-items: stretch;
+            gap: 0;
+        }
+
+        .stepper-group input[type="number"] {
+            flex: 1;
+            min-width: 0;
+            border-radius: 0;
+            text-align: center;
+            border-left: none;
+            border-right: none;
+            position: relative;
+            z-index: 1;
+        }
+
+        .stepper-btn {
+            flex-shrink: 0;
+            width: 34px;
+            border: 1px solid var(--border-color);
+            background-color: var(--table-head-bg);
+            color: var(--text-color);
+            font-size: 16px;
+            font-weight: 700;
+            line-height: 1;
+            padding: 0;
+            box-shadow: none;
+            cursor: pointer;
+            user-select: none;
+            touch-action: manipulation;
+        }
+
+        .stepper-btn:first-child {
+            border-radius: 6px 0 0 6px;
+        }
+
+        .stepper-btn:last-child {
+            border-radius: 0 6px 6px 0;
+        }
+
+        .stepper-btn:hover {
+            background-color: var(--accent-color);
+            color: #ffffff;
+            border-color: var(--accent-color);
+        }
+
+        .stepper-btn:active {
+            transform: scale(0.96);
+        }
+
+        /* ===================== IPAD / MOBILE OPTIMIZATION ===================== */
+        @media (max-width: 992px) {
+            body {
+                padding: 12px;
+            }
+
+            .header-container {
+                margin-bottom: 14px;
+                padding-bottom: 12px;
+            }
+
+            h1 {
+                font-size: 19px;
+            }
+
+            .control-card {
+                padding: 14px;
+            }
+
+            /* Prevent iOS auto-zoom-on-focus by keeping form text at 16px+ */
+            input[type="file"], input[type="number"], select, button, .stepper-btn {
+                font-size: 16px;
+            }
+
+            input[type="number"], select, button, .stepper-btn, .flip-btn,
+            .size-step-btn, .size-reset-btn {
+                min-height: 44px;
+            }
+
+            /* Icon buttons stay compact & round, sized as a square (not stretched) */
+            .info-icon, .chevron-btn {
+                width: 34px;
+                height: 34px;
+                min-width: 34px;
+                min-height: 34px;
+                font-size: 14px;
+            }
+
+            .stepper-btn {
+                width: 42px;
+            }
+
+            input[type="checkbox"] {
+                width: 20px;
+                height: 20px;
+            }
+
+            .size-step-btn, .size-reset-btn {
+                width: 38px;
+                height: 38px;
+                font-size: 18px;
+            }
+
+            .canvas-size-slider {
+                height: 38px;
+            }
+
+            /* The sidebar becomes a narrow (~320px) drawer at this width, so
+               stack Scale/Width/Height vertically instead of 3-across —
+               each row gets full width and its stepper buttons stay usable. */
+            .row-group {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+        }
+
+        @media (min-width: 700px) and (max-width: 992px) {
+            .canvas-grid.mode-fit-width,
+            .canvas-grid.mode-scrollable,
+            .canvas-grid.mode-fit-screen {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 16px;
+            }
+
+            .canvas-grid .canvas-container {
+                max-width: 100% !important;
+            }
+        }
+
+        /* ===================== HAMBURGER / OFF-CANVAS SETTINGS DRAWER ===================== */
+        .hamburger-btn {
+            display: none;
+        }
+
+        .sidebar-close-btn {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            width: 34px;
+            height: 34px;
+            min-width: 34px;
+            border-radius: 50%;
+            border: 1px solid var(--border-color);
+            background-color: var(--input-bg);
+            color: var(--text-color);
+            font-size: 18px;
+            line-height: 1;
+            padding: 0;
+            box-shadow: none;
+            margin: 0 0 14px auto;
+        }
+
+        .sidebar-overlay {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0,0,0,0.45);
+            z-index: 1100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+        }
+
+        .sidebar-overlay.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        @media (max-width: 992px) {
+            .hamburger-btn {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 50px;
+                height: 50px;
+                min-width: 50px;
+                border-radius: 50%;
+                border: 1px solid var(--border-color);
+                background-color: var(--accent-color);
+                color: #ffffff;
+                font-size: 20px;
+                line-height: 1;
+                padding: 0;
+                box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+                flex-shrink: 0;
+                position: fixed;
+                top: 20px;
+                left: 20px;
+                z-index: 1250;
+            }
+
+            .hamburger-btn:hover {
+                background-color: var(--accent-hover);
+            }
+
+            .hamburger-btn:active {
+                transform: scale(0.94);
+            }
+
+            /* The button now floats over the page (top-left) instead of
+               sitting in the header, so give the header room to clear it. */
+            .header-container {
+                padding-left: 62px;
+            }
+
+            h1 {
+                min-width: 0;
+            }
+
+            .sidebar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                height: 100%;
+                width: min(320px, 85vw);
+                background-color: var(--container-bg);
+                z-index: 1200;
+                overflow-y: auto;
+                padding: 16px;
+                box-sizing: border-box;
+                box-shadow: 4px 0 28px rgba(0,0,0,0.28);
+                transform: translateX(-105%);
+                transition: transform 0.28s ease;
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .sidebar-close-btn {
+                display: flex;
+            }
+        }
     </style>
 </head>
 <body>
 
     <div class="header-container">
-        <h1>Perler Bead Pattern Generator Pro</h1>
+        <button type="button" id="hamburgerBtn" class="hamburger-btn" aria-label="Open settings menu" aria-expanded="false">☰</button>
+        <h1>Perler Beads Pattern Generator</h1>
         <label class="dark-mode-toggle">
             <input type="checkbox" id="darkModeToggle">
             Dark Mode
         </label>
     </div>
 
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
     <div class="dashboard-layout">
         
-        <aside class="sidebar">
+        <aside class="sidebar" id="sidebar">
+            <button type="button" id="sidebarCloseBtn" class="sidebar-close-btn" aria-label="Close settings menu">&times;</button>
             
-            <div class="control-card">
-                <h3>1. Image Source</h3>
+            <div class="control-card" data-card="1">
+                <div class="card-title-row">
+                    <div class="card-title-left">
+                        <h3>1. Image Source</h3>
+                        <button type="button" class="info-icon" data-info-title="Image Source" data-info-text="Upload the picture you want turned into a bead pattern — a photo, sprite, or logo. Auto-Crop trims empty white space around it first, so your pattern isn't wasted on blank margins.">i</button>
+                    </div>
+                    <button type="button" class="chevron-btn" aria-label="Collapse panel">▾</button>
+                </div>
+                <div class="card-body">
                 <div class="control-group">
                     <label for="imageUpload">Upload Matrix Asset</label>
                     <input type="file" id="imageUpload" accept="image/*">
@@ -643,44 +1081,117 @@
                         </button>
                     </div>
                 </div>
-            </div>
-
-            <div class="control-card">
-                <h3>2. Grid Geometry</h3>
-                <div class="row-group">
-                    <div class="control-group">
-                        <label for="scalePercent">Scale (%)</label>
-                        <input type="number" id="scalePercent" value="100" min="10" max="500">
-                    </div>
-                    <div class="control-group">
-                        <label for="gridWidth">Width</label>
-                        <input type="number" id="gridWidth" value="30" min="5" max="200">
-                    </div>
-                    <div class="control-group">
-                        <label for="gridHeight">Height</label>
-                        <input type="number" id="gridHeight" value="30" min="5" max="200">
-                    </div>
                 </div>
             </div>
 
-            <div class="control-card">
-                <h3>3. Color Quantization</h3>
+            <div class="control-card" data-card="2">
+                <div class="card-title-row">
+                    <div class="card-title-left">
+                        <h3>2. Grid Geometry</h3>
+                        <button type="button" class="info-icon" data-info-title="Grid Geometry" data-info-text="Sets how many beads wide and tall your pattern will be. Bigger numbers mean more detail but more beads to buy and more time to place them. Use the − / + buttons or tap and hold to adjust and watch the preview update live.">i</button>
+                    </div>
+                    <button type="button" class="chevron-btn" aria-label="Collapse panel">▾</button>
+                </div>
+                <div class="card-body">
+                <div class="row-group">
+                    <div class="control-group">
+                        <label for="scalePercent">Scale (%)</label>
+                        <div class="stepper-group">
+                            <button type="button" class="stepper-btn" data-stepper-target="scalePercent" data-stepper-amount="-5">−</button>
+                            <input type="number" id="scalePercent" value="100" min="10" max="500">
+                            <button type="button" class="stepper-btn" data-stepper-target="scalePercent" data-stepper-amount="5">+</button>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label for="gridWidth">Width</label>
+                        <div class="stepper-group">
+                            <button type="button" class="stepper-btn" data-stepper-target="gridWidth" data-stepper-amount="-1">−</button>
+                            <input type="number" id="gridWidth" value="30" min="5" max="200">
+                            <button type="button" class="stepper-btn" data-stepper-target="gridWidth" data-stepper-amount="1">+</button>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label for="gridHeight">Height</label>
+                        <div class="stepper-group">
+                            <button type="button" class="stepper-btn" data-stepper-target="gridHeight" data-stepper-amount="-1">−</button>
+                            <input type="number" id="gridHeight" value="30" min="5" max="200">
+                            <button type="button" class="stepper-btn" data-stepper-target="gridHeight" data-stepper-amount="1">+</button>
+                        </div>
+                    </div>
+                </div>
+                </div>
+            </div>
+
+            <div class="control-card" data-card="3">
+                <div class="card-title-row">
+                    <div class="card-title-left">
+                        <h3>3. Color Quantization</h3>
+                        <button type="button" class="info-icon" data-info-title="Color Quantization" data-info-text="Real Perler beads only come in a limited set of colors, so your source image has to be 'translated' down to that palette. This panel has three controls that work together:
+
+• Bead Color Palette Range — which set of real bead colors are allowed
+• Processing Mode — whether edges stay sharp or blend smoothly
+• Matching Algorithm — the math used to pick the closest bead for each pixel
+
+Tap the small i next to each control below for a full breakdown of its options and when to use them.">i</button>
+                    </div>
+                    <button type="button" class="chevron-btn" aria-label="Collapse panel">▾</button>
+                </div>
+                <div class="card-body">
                 <div class="control-group">
-                    <label for="paletteSelect">Bead Color Palette Range</label>
+                    <div class="control-label-row">
+                        <label for="paletteSelect">Bead Color Palette Range</label>
+                        <button type="button" class="info-icon" data-info-title="Bead Color Palette Range" data-info-text="Controls which real-world bead colors are allowed when matching your image. Both ranges cover the same 9 color families — Yellows/Oranges, Greens, Blues, Purples, Pinks, Reds, Browns, Greys/Blacks/Whites, and Muted/Dusty tones — the difference is how many shades within each family you can draw from.
+
+Standard Core Range — about 144 colors, one solid, well-spaced shade for most tones in each family. Fewer near-duplicate colors to buy and sort, so it's easier to shop for and keep track of. Use this for most projects, simpler designs, and anything you want to keep affordable and easy to restock.
+
+Extended Comprehensive Range — about 221 colors, adding many extra in-between shades to each family (deeper shadows, softer pastels, subtle mid-tones). Lets the matcher pick a much closer color for every pixel. Use this for detailed portraits, gradients, or shading where accuracy matters more than keeping the bead shopping list short.">i</button>
+                    </div>
                     <select id="paletteSelect">
                         <option value="standard" selected>Standard Core Range</option>
                         <option value="extended">Extended Comprehensive Range</option>
                     </select>
                 </div>
                 <div class="control-group">
-                    <label for="processingMode">Processing Mode</label>
+                    <div class="control-label-row">
+                        <label for="processingMode">Processing Mode</label>
+                        <button type="button" class="info-icon" data-info-title="Processing Mode" data-info-text="Controls how pixels are converted to beads.
+
+🎨 Pixel Art (Sharp Grid) — each pixel is matched independently, keeping edges crisp with no blending between beads. Use this for sprites, logos, pixel art, and any source image that already has hard, clean edges.
+
+🖼️ Photo / Gradient (Smooth) — neighboring pixels are blended before matching, softening banding and giving gradients a more natural look. Use this for photographs, portraits, and images with soft lighting or gradients. Note it can slightly blur very fine details.">i</button>
+                    </div>
                     <select id="processingMode">
                         <option value="pixel" selected>🎨 Pixel Art (Sharp Grid)</option>
                         <option value="photo">🖼️ Photo / Gradient (Smooth)</option>
                     </select>
                 </div>
                 <div class="control-group">
-                    <label for="colorAlgo">Matching Algorithm</label>
+                    <div class="control-label-row">
+                        <label for="colorAlgo">Matching Algorithm</label>
+                        <button type="button" class="info-icon" data-info-title="Matching Algorithm" data-info-text="The formula used to measure 'distance' between your image's pixel color and each available bead color, so the closest one wins. All are solid choices — here's when each shines:
+
+1. Redmean (Perceptual Balance) — a well-rounded, red-weighted formula that approximates human vision without being slow. Good default for almost any image.
+
+2. CIE76 (Pro Visual Perception) — uses the Lab color space, the closest match to how human eyes actually perceive color differences. Best for skin tones and professional-grade accuracy.
+
+3. Euclidean (True RGB) — straight-line distance in raw RGB. Simple and fast, but not perceptually weighted, so results can look slightly off to the eye.
+
+4. Weighted RGB (Classic Luminescence) — an older luminance-weighted formula. A reasonable all-rounder, similar in spirit to Redmean.
+
+5. Luma (YIQ Contrast) — prioritizes brightness over color. Good for high-contrast, black & white, or line-art style images.
+
+6. HSV Space (Prioritizes Hue) — matches by hue first. Use when keeping the right color family (reds staying red, blues staying blue) matters more than exact shade.
+
+7. HSL Space (Prioritizes Lightness/Hue) — similar to HSV but balances lightness and hue together. Good for pastel or muted images.
+
+8. CMYK Space (Physical Dye Matching) — simulates how pigments/dyes mix. Can help if you're matching against a printed reference image.
+
+9. Manhattan (Taxicab RGB) — sums the raw channel differences. Very fast and simple, with results close to Euclidean.
+
+10. Chebyshev (Max RGB Difference) — only looks at the single most different color channel. Fast, but can cause more abrupt or vivid color jumps.
+
+If you're not sure, start with Redmean or CIE76.">i</button>
+                    </div>
                     <select id="colorAlgo">
                         <option value="redmean" selected>1. Redmean (Perceptual Balance)</option>
                         <option value="cielab76">2. CIE76 (Pro Visual Perception)</option>
@@ -694,10 +1205,18 @@
                         <option value="chebyshev">10. Chebyshev (Max RGB Difference)</option>
                     </select>
                 </div>
+                </div>
             </div>
 
-            <div class="control-card">
-                <h3>4. Outline Processing</h3>
+            <div class="control-card" data-card="4">
+                <div class="card-title-row">
+                    <div class="card-title-left">
+                        <h3>4. Outline Processing</h3>
+                        <button type="button" class="info-icon" data-info-title="Outline Processing" data-info-text="Adds a black outline around shapes so pixel art and sprites look crisp, like a coloring-book line. Spatial outlines the outer silhouette, Sobel finds internal edges, and Luminance darkens shadowy areas. Gravity controls how strongly edges snap to black beads.">i</button>
+                    </div>
+                    <button type="button" class="chevron-btn" aria-label="Collapse panel">▾</button>
+                </div>
+                <div class="card-body">
                 <div class="control-group">
                     <label for="outlineMode">Black Outline Mode</label>
                     <select id="outlineMode">
@@ -715,10 +1234,18 @@
                     <label id="gravityLabel" for="h7Gravity">H7 Edge Snap / Gravity (25)</label>
                     <input type="range" id="h7Gravity" min="0" max="100" value="25" style="padding: 4px 0;">
                 </div>
+                </div>
             </div>
 
-            <div class="control-card">
-                <h3>5. Manual Pixel Override Editor</h3>
+            <div class="control-card" data-card="5">
+                <div class="card-title-row">
+                    <div class="card-title-left">
+                        <h3>5. Manual Pixel Override Editor</h3>
+                        <button type="button" class="info-icon" data-info-title="Manual Pixel Override Editor" data-info-text="Lets you fine-tune the pattern by hand. In Paint Mode, tap any bead on the canvas to recolor it with your chosen brush. In Revert Mode, tapping restores that bead to its original auto-generated color — a safe way to explore without messing things up.">i</button>
+                    </div>
+                    <button type="button" class="chevron-btn" aria-label="Collapse panel">▾</button>
+                </div>
+                <div class="card-body">
                 <div class="control-group">
                     <label for="editorToolSelect">Touch Screen Tool Mode</label>
                     <select id="editorToolSelect">
@@ -743,10 +1270,18 @@
                         💡 Tip: Right-Click cells directly on the canvas to instantly clear overrides. Swap ranges using Card 3 anytime.
                     </span>
                 </div>
+                </div>
             </div>
 
-            <div class="control-card">
-                <h3>6. Export Configuration</h3>
+            <div class="control-card" data-card="6">
+                <div class="card-title-row">
+                    <div class="card-title-left">
+                        <h3>6. Export Configuration</h3>
+                        <button type="button" class="info-icon" data-info-title="Export Configuration" data-info-text="Downloads your finished pattern as an image file. Blueprint includes the color codes printed on each bead (best for shopping and placing beads). Base Grid is the plain colored grid. Fused Preview shows what the melted, finished piece will look like.">i</button>
+                    </div>
+                    <button type="button" class="chevron-btn" aria-label="Collapse panel">▾</button>
+                </div>
+                <div class="card-body">
                 <div class="control-group download-group">
                     <label for="dlType">Export Format Target</label>
                     <select id="dlType">
@@ -755,6 +1290,7 @@
                         <option value="fused">Download Fused Preview</option>
                     </select>
                     <button id="downloadBtn" disabled>Download Image Asset</button>
+                </div>
                 </div>
             </div>
 
@@ -783,7 +1319,10 @@
             <div class="canvas-grid mode-fit-width">
                 <div class="canvas-container" id="baseGridContainer">
                     <div class="canvas-header-row">
-                        <h2>Base Grid (No Codes)</h2>
+                        <div class="canvas-title-left">
+                            <h2>Base Grid (No Codes)</h2>
+                            <button type="button" class="info-icon" data-info-title="Base Grid" data-info-text="A plain preview of your pattern's colors with no text on the beads. Handy for getting a quick visual sense of the design before you commit to placing beads.">i</button>
+                        </div>
                         <div class="canvas-resize-controls" data-target="baseGridContainer">
                             <button type="button" class="size-step-btn" data-step="-1" aria-label="Decrease Base Grid size">−</button>
                             <input type="range" class="canvas-size-slider" min="150" max="1200" step="10" aria-label="Resize Base Grid canvas">
@@ -798,7 +1337,10 @@
                 </div>
                 <div class="canvas-container" id="blueprintContainer">
                     <div class="canvas-header-row">
-                        <h2>Blueprint Guide (Codes)</h2>
+                        <div class="canvas-title-left">
+                            <h2>Blueprint Guide (Codes)</h2>
+                            <button type="button" class="info-icon" data-info-title="Blueprint Guide" data-info-text="This is your shopping and assembly guide. Every bead shows its color code letter/number, so you know exactly which bead color goes in each spot when you're placing them on your pegboard.">i</button>
+                        </div>
                         <div class="canvas-resize-controls" data-target="blueprintContainer">
                             <button type="button" class="size-step-btn" data-step="-1" aria-label="Decrease Blueprint Guide size">−</button>
                             <input type="range" class="canvas-size-slider" min="150" max="1200" step="10" aria-label="Resize Blueprint Guide canvas">
@@ -813,7 +1355,10 @@
                 </div>
                 <div class="canvas-container" id="fusedSimContainer">
                     <div class="canvas-header-row">
-                        <h2>Fused Simulation</h2>
+                        <div class="canvas-title-left">
+                            <h2>Fused Simulation</h2>
+                            <button type="button" class="info-icon" data-info-title="Fused Simulation" data-info-text="A realistic preview of what your project will look like after the beads are arranged and ironed (fused) together — rounded, glossy beads instead of flat colored squares. Great for judging the final look before you start.">i</button>
+                        </div>
                         <div class="canvas-resize-controls" data-target="fusedSimContainer">
                             <button type="button" class="size-step-btn" data-step="-1" aria-label="Decrease Fused Simulation size">−</button>
                             <input type="range" class="canvas-size-slider" min="150" max="1200" step="10" aria-label="Resize Fused Simulation canvas">
@@ -835,6 +1380,14 @@
 
         </main>
 
+    </div>
+
+    <div id="infoPopover" role="dialog" aria-live="polite">
+        <div class="popover-head">
+            <span class="popover-title" id="infoPopoverTitle"></span>
+            <button type="button" class="popover-close" id="infoPopoverClose" aria-label="Close">&times;</button>
+        </div>
+        <p id="infoPopoverText"></p>
     </div>
 
     <script>
@@ -2000,6 +2553,187 @@
             link.href = targetCanvas.toDataURL ? targetCanvas.toDataURL('image/png') : targetCanvas.toDataURL();
             link.click();
         });
+
+        /* ===================== INFO ICON POPOVERS ===================== */
+        (function setupInfoPopovers() {
+            const popover = document.getElementById('infoPopover');
+            const popoverTitle = document.getElementById('infoPopoverTitle');
+            const popoverText = document.getElementById('infoPopoverText');
+            const popoverClose = document.getElementById('infoPopoverClose');
+            let activeIcon = null;
+
+            function closePopover() {
+                popover.classList.remove('visible');
+                if (activeIcon) activeIcon.classList.remove('active');
+                activeIcon = null;
+            }
+
+            function positionPopover(icon) {
+                const rect = icon.getBoundingClientRect();
+                const popRect = popover.getBoundingClientRect();
+                const margin = 8;
+
+                let left = rect.left;
+                let top = rect.bottom + margin;
+
+                // Keep within viewport horizontally
+                const maxLeft = window.innerWidth - popRect.width - margin;
+                if (left > maxLeft) left = Math.max(margin, maxLeft);
+                if (left < margin) left = margin;
+
+                // If not enough room below, place above the icon instead
+                if (top + popRect.height > window.innerHeight - margin) {
+                    top = rect.top - popRect.height - margin;
+                    if (top < margin) top = margin;
+                }
+
+                popover.style.left = `${left}px`;
+                popover.style.top = `${top}px`;
+            }
+
+            function openPopover(icon) {
+                popoverTitle.textContent = icon.dataset.infoTitle || '';
+                popoverText.textContent = icon.dataset.infoText || '';
+                popover.classList.add('visible');
+                icon.classList.add('active');
+                activeIcon = icon;
+                // Position after it's rendered so we can measure its size
+                requestAnimationFrame(() => positionPopover(icon));
+            }
+
+            document.querySelectorAll('.info-icon').forEach(icon => {
+                icon.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (activeIcon === icon) {
+                        closePopover();
+                    } else {
+                        openPopover(icon);
+                    }
+                });
+            });
+
+            popoverClose.addEventListener('click', (e) => {
+                e.stopPropagation();
+                closePopover();
+            });
+
+            document.addEventListener('click', (e) => {
+                if (popover.classList.contains('visible') && !popover.contains(e.target)) {
+                    closePopover();
+                }
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') closePopover();
+            });
+
+            window.addEventListener('scroll', () => {
+                if (activeIcon) positionPopover(activeIcon);
+            }, true);
+
+            window.addEventListener('resize', () => {
+                if (activeIcon) positionPopover(activeIcon);
+            });
+        })();
+
+        /* ===================== COLLAPSIBLE SIDEBAR PANELS ===================== */
+        (function setupAccordionPanels() {
+            document.querySelectorAll('.control-card[data-card]').forEach(card => {
+                const titleRow = card.querySelector('.card-title-row');
+                const chevron = card.querySelector('.chevron-btn');
+                if (!titleRow || !chevron) return;
+
+                function toggle(e) {
+                    // Don't collapse the panel if the tap was on the info icon
+                    if (e.target.closest('.info-icon')) return;
+                    card.classList.toggle('collapsed');
+                }
+
+                titleRow.addEventListener('click', toggle);
+            });
+        })();
+
+        /* ===================== NUMBER STEPPER (HOLD-TO-REPEAT) ===================== */
+        (function setupNumberSteppers() {
+            const REPEAT_DELAY = 450;   // ms before repeat kicks in
+            const REPEAT_INTERVAL = 90; // ms between repeats while held
+
+            document.querySelectorAll('.stepper-btn').forEach(btn => {
+                const targetInput = document.getElementById(btn.dataset.stepperTarget);
+                const amount = parseFloat(btn.dataset.stepperAmount);
+                if (!targetInput) return;
+
+                let repeatTimeout = null;
+                let repeatInterval = null;
+
+                function applyStep() {
+                    const min = targetInput.min !== '' ? parseFloat(targetInput.min) : -Infinity;
+                    const max = targetInput.max !== '' ? parseFloat(targetInput.max) : Infinity;
+                    let val = parseFloat(targetInput.value) || 0;
+                    val = Math.min(max, Math.max(min, val + amount));
+                    targetInput.value = val;
+                    targetInput.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+
+                function startRepeat() {
+                    applyStep();
+                    repeatTimeout = setTimeout(() => {
+                        repeatInterval = setInterval(applyStep, REPEAT_INTERVAL);
+                    }, REPEAT_DELAY);
+                }
+
+                function stopRepeat() {
+                    clearTimeout(repeatTimeout);
+                    clearInterval(repeatInterval);
+                    repeatTimeout = null;
+                    repeatInterval = null;
+                }
+
+                btn.addEventListener('mousedown', (e) => { e.preventDefault(); startRepeat(); });
+                btn.addEventListener('mouseup', stopRepeat);
+                btn.addEventListener('mouseleave', stopRepeat);
+
+                btn.addEventListener('touchstart', (e) => { e.preventDefault(); startRepeat(); }, { passive: false });
+                btn.addEventListener('touchend', stopRepeat);
+                btn.addEventListener('touchcancel', stopRepeat);
+            });
+        })();
+        /* ===================== HAMBURGER / OFF-CANVAS SETTINGS DRAWER ===================== */
+        (function setupSettingsDrawer() {
+            const hamburgerBtn = document.getElementById('hamburgerBtn');
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            const closeBtn = document.getElementById('sidebarCloseBtn');
+            if (!hamburgerBtn || !sidebar || !overlay || !closeBtn) return;
+
+            function openDrawer() {
+                sidebar.classList.add('open');
+                overlay.classList.add('visible');
+                hamburgerBtn.setAttribute('aria-expanded', 'true');
+            }
+
+            function closeDrawer() {
+                sidebar.classList.remove('open');
+                overlay.classList.remove('visible');
+                hamburgerBtn.setAttribute('aria-expanded', 'false');
+            }
+
+            hamburgerBtn.addEventListener('click', () => {
+                sidebar.classList.contains('open') ? closeDrawer() : openDrawer();
+            });
+            closeBtn.addEventListener('click', closeDrawer);
+            overlay.addEventListener('click', closeDrawer);
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && sidebar.classList.contains('open')) closeDrawer();
+            });
+
+            // If the viewport grows back to desktop size, make sure the
+            // drawer state doesn't leave things in a broken visual state.
+            window.addEventListener('resize', () => {
+                if (window.innerWidth > 992) closeDrawer();
+            });
+        })();
     </script>
 </body>
 </html>
