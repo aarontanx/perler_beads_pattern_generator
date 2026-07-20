@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Perler Bead Pattern Generator Pro</title>
+    <title>Perler Bead Pattern Generator</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Crect x='1' y='1' width='8' height='8' rx='2' fill='%23E85D5D'/%3E%3Crect x='11' y='1' width='8' height='8' rx='2' fill='%23F4C542'/%3E%3Crect x='1' y='11' width='8' height='8' rx='2' fill='%234C8BF5'/%3E%3Crect x='11' y='11' width='8' height='8' rx='2' fill='%2357B894'/%3E%3C/svg%3E">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght=500;600;700;800&family=JetBrains+Mono:wght=500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
     <style>
         :root {
             --canvas-max-width: 600px;
@@ -341,7 +341,7 @@
             display: none;
         }
 
-        /* Desktop Viewport Setup */
+        /* Desktop Independent Two-Track Split Scrolling Viewport Setup */
         @media (min-width: 993px) {
             body {
                 height: 100vh;
@@ -410,17 +410,7 @@
             .dashboard-layout {
                 grid-template-columns: 1fr;
             }
-            .header-container {
-                padding-left: 54px;
-            }
-            .hamburger-btn { 
-                display: flex; 
-                position: fixed;
-                top: 16px;
-                left: 16px;
-                z-index: 1000;
-                box-shadow: var(--card-shadow);
-            }
+            .hamburger-btn { display: flex; }
             .drawer-overlay { display: block; }
             .drawer-head { display: flex; }
             .sidebar {
@@ -429,7 +419,7 @@
                 left: 0;
                 width: min(86vw, 340px);
                 height: 100dvh;
-                z-index: 1050;
+                z-index: 950;
                 background: var(--container-bg);
                 box-shadow: var(--shadow-lg);
                 padding: 16px;
@@ -523,29 +513,6 @@
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 8px;
-        }
-
-        .geometry-btn-group {
-            display: flex;
-            gap: 3px;
-            margin-top: 4px;
-        }
-
-        .geometry-btn-group button {
-            padding: 6px 0;
-            font-size: 13px;
-            border-radius: var(--radius-sm);
-            background-color: var(--input-bg);
-            color: var(--text-color);
-            border: 1px solid var(--border-color);
-            box-shadow: none;
-            width: 50%;
-        }
-
-        .geometry-btn-group button:hover {
-            background-color: var(--accent-color);
-            color: white;
-            border-color: var(--accent-color);
         }
 
         label {
@@ -699,6 +666,17 @@
 
         #downloadBtn:hover {
             background-color: var(--success-hover);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            color: var(--accent-color);
+            border: 1.5px solid var(--accent-color);
+            box-shadow: none;
+        }
+        .btn-outline:hover {
+            background-color: var(--accent-soft);
+            color: var(--accent-color);
         }
 
         button:disabled, button:disabled:hover {
@@ -979,6 +957,7 @@
             margin-top: 8px;
             padding: 10px;
             background: var(--table-head-bg);
+            border-radius: var(--radius-sm);
             border: 1px solid var(--border-color);
         }
         #brushCode { font-family: var(--font-mono); }
@@ -1100,26 +1079,14 @@
                     <div class="control-group">
                         <label for="scalePercent">Scale (%)</label>
                         <input type="number" id="scalePercent" value="100" min="10" max="500">
-                        <div class="geometry-btn-group">
-                            <button type="button" class="geo-step-btn" data-target="scalePercent" data-step="-10">−</button>
-                            <button type="button" class="geo-step-btn" data-target="scalePercent" data-step="10">+</button>
-                        </div>
                     </div>
                     <div class="control-group">
                         <label for="gridWidth">Width</label>
                         <input type="number" id="gridWidth" value="30" min="5" max="200">
-                        <div class="geometry-btn-group">
-                            <button type="button" class="geo-step-btn" data-target="gridWidth" data-step="-1">−</button>
-                            <button type="button" class="geo-step-btn" data-target="gridWidth" data-step="1">+</button>
-                        </div>
                     </div>
                     <div class="control-group">
                         <label for="gridHeight">Height</label>
                         <input type="number" id="gridHeight" value="30" min="5" max="200">
-                        <div class="geometry-btn-group">
-                            <button type="button" class="geo-step-btn" data-target="gridHeight" data-step="-1">−</button>
-                            <button type="button" class="geo-step-btn" data-target="gridHeight" data-step="1">+</button>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -1235,7 +1202,11 @@
                         <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3v10"/><path d="M6 9.5l4 4 4-4"/><path d="M3.5 16h13"/></svg>
                         Download Image Asset
                     </button>
-                    <p class="export-hint">💡 Note: Apple device security restricts automated web downloads. On iOS/Android, clicking download opens a layout modal tailored to touch devices, allowing you to instantly press-and-hold to send grids straight to your camera roll.</p>
+                    <button id="savePhotosBtn" type="button" class="btn-outline" disabled>
+                        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2.8v9"/><path d="M6.8 5.8L10 2.6l3.2 3.2"/><path d="M4 9v6.2c0 .9.7 1.6 1.6 1.6h8.8c.9 0 1.6-.7 1.6-1.6V9"/></svg>
+                        Save to Photos
+                    </button>
+                    <p class="export-hint">"Save to Photos" opens your device's share sheet on iOS/Android so you can save the image straight to your camera roll. If sharing isn't supported, it opens the image in a new tab instead.</p>
                 </div>
             </div>
 
@@ -1320,46 +1291,144 @@
 
     <script>
         const standardPalette = [
+            // A Series: Yellows & Oranges
             {code: 'A1', hex: '#FAF4C8'}, {code: 'A2', hex: '#FFFFD5'}, {code: 'A3', hex: '#FEFF8B'}, {code: 'A4', hex: '#FBED56'}, 
             {code: 'A5', hex: '#F4D738'}, {code: 'A6', hex: '#FEAC4C'}, {code: 'A7', hex: '#FE8B4C'}, {code: 'A8', hex: '#FFDA45'},
             {code: 'A9', hex: '#FF995B'}, {code: 'A10', hex: '#F77C31'}, {code: 'A11', hex: '#FFDD99'}, {code: 'A12', hex: '#FE9F72'},
             {code: 'A13', hex: '#FFC365'}, {code: 'A14', hex: '#FD543D'}, {code: 'A15', hex: '#FFF365'},
+
+            // B Series: Greens
             {code: 'B1', hex: '#E6EE31'}, {code: 'B2', hex: '#63F347'}, {code: 'B3', hex: '#9EF780'}, {code: 'B4', hex: '#5DE035'}, 
             {code: 'B5', hex: '#35E352'}, {code: 'B6', hex: '#65E2A6'}, {code: 'B7', hex: '#3DAF80'}, {code: 'B8', hex: '#1C9C4F'},
             {code: 'B10', hex: '#95D3C2'}, {code: 'B11', hex: '#5D722A'}, {code: 'B12', hex: '#166F41'},
             {code: 'B13', hex: '#CAEB7B'}, {code: 'B14', hex: '#ADE946'}, {code: 'B15', hex: '#2E5132'}, {code: 'B16', hex: '#C5ED9C'},
             {code: 'B17', hex: '#9BB13A'}, {code: 'B18', hex: '#E6EE49'}, {code: 'B19', hex: '#24B88C'}, {code: 'B20', hex: '#C7EDDF'},
+
+            // C Series: Blues
             {code: 'C1', hex: '#E8FFE7'}, {code: 'C2', hex: '#A9F9FC'}, {code: 'C3', hex: '#A0E2FB'}, {code: 'C4', hex: '#48BAED'}, 
             {code: 'C5', hex: '#01ACEB'}, {code: 'C6', hex: '#50AAF0'}, {code: 'C7', hex: '#3677D2'}, {code: 'C8', hex: '#0F54C0'},
             {code: 'C9', hex: '#324BCA'}, {code: 'C10', hex: '#3EBCE2'}, {code: 'C11', hex: '#28DDDE'}, {code: 'C12', hex: '#1C334D'},
             {code: 'C13', hex: '#CDE8FF'}, {code: 'C14', hex: '#D5FDFF'}, {code: 'C15', hex: '#22C4C6'}, {code: 'C16', hex: '#1557A8'},
-            {code: 'C17', hex: '#04D1F6'}, {code: 'D1', hex: '#AEB4F2'}, {code: 'D2', hex: '#858EDD'}, {code: 'D3', hex: '#2F54AF'}, 
+            {code: 'C17', hex: '#04D1F6'},
+
+            // D Series: Purples
+            {code: 'D1', hex: '#AEB4F2'}, {code: 'D2', hex: '#858EDD'}, {code: 'D3', hex: '#2F54AF'}, 
             {code: 'D5', hex: '#B843C5'}, {code: 'D6', hex: '#AC7BDE'}, {code: 'D7', hex: '#8854B3'}, {code: 'D8', hex: '#E2D3FF'},
             {code: 'D9', hex: '#D5B9F8'}, {code: 'D11', hex: '#B9BAE1'}, {code: 'D12', hex: '#DE9AD4'},
             {code: 'D13', hex: '#B90095'}, {code: 'D14', hex: '#8B279B'}, {code: 'D15', hex: '#2F1F90'}, {code: 'D16', hex: '#E3E1EE'},
             {code: 'D17', hex: '#C4D4F6'}, {code: 'D18', hex: '#A45EC7'}, {code: 'D19', hex: '#D8C3D7'}, {code: 'D20', hex: '#9C32B2'},
-            {code: 'D21', hex: '#9A009B'}, {code: 'E1', hex: '#FDD3CC'}, {code: 'E2', hex: '#FEC0DF'}, {code: 'E3', hex: '#FFB7E7'}, 
-            {code: 'E4', hex: '#E8649E'}, {code: 'E5', hex: '#F551A2'}, {code: 'E6', hex: '#F13D74'}, {code: 'E7', hex: '#C63478'}, 
-            {code: 'E8', hex: '#FFDBE9'}, {code: 'E9', hex: '#E970CC'}, {code: 'E10', hex: '#D33793'}, {code: 'E11', hex: '#FCDDD2'}, 
-            {code: 'E12', hex: '#F78FC3'}, {code: 'E13', hex: '#B5006D'}, {code: 'E14', hex: '#FFD1BA'}, {code: 'E15', hex: '#F8C7C9'},
+            {code: 'D21', hex: '#9A009B'},
+
+            // E Series: Pinks
+            {code: 'E1', hex: '#FDD3CC'}, {code: 'E2', hex: '#FEC0DF'}, {code: 'E3', hex: '#FFB7E7'}, {code: 'E4', hex: '#E8649E'},
+            {code: 'E5', hex: '#F551A2'}, {code: 'E6', hex: '#F13D74'}, {code: 'E7', hex: '#C63478'}, {code: 'E8', hex: '#FFDBE9'},
+            {code: 'E9', hex: '#E970CC'}, {code: 'E10', hex: '#D33793'}, {code: 'E11', hex: '#FCDDD2'}, {code: 'E12', hex: '#F78FC3'},
+            {code: 'E13', hex: '#B5006D'}, {code: 'E14', hex: '#FFD1BA'}, {code: 'E15', hex: '#F8C7C9'},
+
+            // F Series: Reds
             {code: 'F1', hex: '#FD957B'}, {code: 'F2', hex: '#FC3D46'}, {code: 'F3', hex: '#F74941'}, {code: 'F4', hex: '#FC283C'},
             {code: 'F5', hex: '#E7002F'}, {code: 'F6', hex: '#943630'}, {code: 'F7', hex: '#971937'}, {code: 'F8', hex: '#BC0028'},
             {code: 'F9', hex: '#E2677A'}, {code: 'F10', hex: '#8A4526'}, {code: 'F11', hex: '#5A2121'}, {code: 'F12', hex: '#FD4E6A'},
-            {code: 'F3', hex: '#F35744'}, {code: 'F14', hex: '#FFA9AD'}, {code: 'G1', hex: '#FFE2CE'}, {code: 'G2', hex: '#FFC4AA'}, 
-            {code: 'G3', hex: '#F4C3A5'}, {code: 'G4', hex: '#E1B383'}, {code: 'G5', hex: '#EDB045'}, {code: 'G6', hex: '#E99C17'}, 
-            {code: 'G7', hex: '#9D5B3E'}, {code: 'G8', hex: '#753832'}, {code: 'G9', hex: '#E6B483'}, {code: 'G10', hex: '#D98C39'}, 
-            {code: 'G11', hex: '#E0C593'}, {code: 'G12', hex: '#FFC890'}, {code: 'B7', hex: '#B7714A'}, {code: 'G14', hex: '#8D614C'}, 
-            {code: 'G15', hex: '#FCF9E0'}, {code: 'G16', hex: '#F2D9BA'}, {code: 'G17', hex: '#78524B'}, {code: 'H1', hex: '#FDFBFF'}, 
-            {code: 'H2', hex: '#FEFFFF'}, {code: 'H3', hex: '#B6B1BA'}, {code: 'H4', hex: '#89858C'}, {code: 'H5', hex: '#48464E'}, 
-            {code: 'H6', hex: '#2F2B2F'}, {code: 'H7', hex: '#000000'}, {code: 'H8', hex: '#E7D6DB'}, {code: 'H9', hex: '#EDEDED'}, 
-            {code: 'H10', hex: '#EEE9EA'}, {code: 'H11', hex: '#CECDD5'}, {code: 'H12', hex: '#FFF5ED'}, {code: 'H13', hex: '#F5ECD2'}, 
-            {code: 'H14', hex: '#CFD7D3'}, {code: 'M1', hex: '#BCC6B8'}, {code: 'M2', hex: '#8AA386'}, {code: 'M3', hex: '#697D80'}, 
-            {code: 'M4', hex: '#E3D2BC'}, {code: 'M5', hex: '#D0CCAA'}, {code: 'M6', hex: '#B0A782'}, {code: 'M7', hex: '#B4A497'}, 
-            {code: 'M8', hex: '#B38281'}, {code: 'M9', hex: '#A58767'}, {code: 'M10', hex: '#C5B2BC'}, {code: 'M11', hex: '#9F7594'}, 
-            {code: 'M12', hex: '#644749'}, {code: 'M13', hex: '#D19066'}, {code: 'M14', hex: '#C77362'}
+            {code: 'F13', hex: '#F35744'}, {code: 'F14', hex: '#FFA9AD'},
+
+            // G Series: Browns
+            {code: 'G1', hex: '#FFE2CE'}, {code: 'G2', hex: '#FFC4AA'}, {code: 'G3', hex: '#F4C3A5'}, {code: 'G4', hex: '#E1B383'}, 
+            {code: 'G5', hex: '#EDB045'}, {code: 'G6', hex: '#E99C17'}, {code: 'G7', hex: '#9D5B3E'}, {code: 'G8', hex: '#753832'},
+            {code: 'G9', hex: '#E6B483'}, {code: 'G10', hex: '#D98C39'}, {code: 'G11', hex: '#E0C593'}, {code: 'G12', hex: '#FFC890'}, 
+            {code: 'G13', hex: '#B7714A'}, {code: 'G14', hex: '#8D614C'}, {code: 'G15', hex: '#FCF9E0'}, {code: 'G16', hex: '#F2D9BA'},
+            {code: 'G17', hex: '#78524B'},
+
+            // H Series: Greys, Blacks, & Whites
+            {code: 'H1', hex: '#FDFBFF'}, {code: 'H2', hex: '#FEFFFF'}, {code: 'H3', hex: '#B6B1BA'}, {code: 'H4', hex: '#89858C'},
+            {code: 'H5', hex: '#48464E'}, {code: 'H6', hex: '#2F2B2F'}, {code: 'H7', hex: '#000000'}, {code: 'H8', hex: '#E7D6DB'},
+            {code: 'H9', hex: '#EDEDED'}, {code: 'H10', hex: '#EEE9EA'}, {code: 'H11', hex: '#CECDD5'}, {code: 'H12', hex: '#FFF5ED'},
+            {code: 'H13', hex: '#F5ECD2'}, {code: 'H14', hex: '#CFD7D3'},
+
+            // M Series: Muted & Dusty Tones
+            {code: 'M1', hex: '#BCC6B8'}, {code: 'M2', hex: '#8AA386'}, {code: 'M3', hex: '#697D80'}, {code: 'M4', hex: '#E3D2BC'},
+            {code: 'M5', hex: '#D0CCAA'}, {code: 'M6', hex: '#B0A782'}, {code: 'M7', hex: '#B4A497'}, {code: 'M8', hex: '#B38281'},
+            {code: 'M9', hex: '#A58767'}, {code: 'M10', hex: '#C5B2BC'}, {code: 'M11', hex: '#9F7594'}, {code: 'M12', hex: '#644749'},
+            {code: 'M13', hex: '#D19066'}, {code: 'M14', hex: '#C77362'}
         ];
 
-        const extendedPalette = [...standardPalette];
+        const extendedPalette = [
+            // A Series: Yellows & Oranges
+            {code: 'A1', hex: '#FAF4C8'}, {code: 'A2', hex: '#FFFFD5'}, {code: 'A3', hex: '#FEFF8B'}, {code: 'A4', hex: '#FBED56'}, 
+            {code: 'A5', hex: '#F4D738'}, {code: 'A6', hex: '#FEAC4C'}, {code: 'A7', hex: '#FE8B4C'}, {code: 'A8', hex: '#FFDA45'},
+            {code: 'A9', hex: '#FF995B'}, {code: 'A10', hex: '#F77C31'}, {code: 'A11', hex: '#FFDD99'}, {code: 'A12', hex: '#FE9F72'},
+            {code: 'A13', hex: '#FFC365'}, {code: 'A14', hex: '#FD543D'}, {code: 'A15', hex: '#FFF365'}, {code: 'A16', hex: '#FFFF9F'},
+            {code: 'A17', hex: '#FFE36E'}, {code: 'A18', hex: '#FEBE7D'}, {code: 'A19', hex: '#FD7C72'}, {code: 'A20', hex: '#FFD568'},
+            {code: 'A21', hex: '#FFE395'}, {code: 'A22', hex: '#F4F57D'}, {code: 'A23', hex: '#E6C9B7'}, {code: 'A24', hex: '#F7F8A2'},
+            {code: 'A25', hex: '#FFD67D'}, {code: 'A26', hex: '#FFC830'},
+
+            // B Series: Greens
+            {code: 'B1', hex: '#E6EE31'}, {code: 'B2', hex: '#63F347'}, {code: 'B3', hex: '#9EF780'}, {code: 'B4', hex: '#5DE035'}, 
+            {code: 'B5', hex: '#35E352'}, {code: 'B6', hex: '#65E2A6'}, {code: 'B7', hex: '#3DAF80'}, {code: 'B8', hex: '#1C9C4F'},
+            {code: 'B9', hex: '#27523A'}, {code: 'B10', hex: '#95D3C2'}, {code: 'B11', hex: '#5D722A'}, {code: 'B12', hex: '#166F41'},
+            {code: 'B13', hex: '#CAEB7B'}, {code: 'B14', hex: '#ADE946'}, {code: 'B15', hex: '#2E5132'}, {code: 'B16', hex: '#C5ED9C'},
+            {code: 'B17', hex: '#9BB13A'}, {code: 'B18', hex: '#E6EE49'}, {code: 'B19', hex: '#24B88C'}, {code: 'B20', hex: '#C7EDDF'}, 
+            {code: 'B21', hex: '#156A6B'}, {code: 'B22', hex: '#0B3C43'}, {code: 'B23', hex: '#303A21'}, {code: 'B24', hex: '#EEFCA5'},
+            {code: 'B25', hex: '#4E846D'}, {code: 'B26', hex: '#8D7A35'}, {code: 'B27', hex: '#CCE1AF'}, {code: 'B28', hex: '#9EE5B9'},
+            {code: 'B29', hex: '#C5E254'}, {code: 'B30', hex: '#E2FCB1'}, {code: 'B31', hex: '#B0E792'}, {code: 'B32', hex: '#9CAB5A'},
+
+            // C Series: Blues
+            {code: 'C1', hex: '#E8FFE7'}, {code: 'C2', hex: '#A9F9FC'}, {code: 'C3', hex: '#A0E2FB'}, {code: 'C4', hex: '#48BAED'}, 
+            {code: 'C5', hex: '#01ACEB'}, {code: 'C6', hex: '#50AAF0'}, {code: 'C7', hex: '#3677D2'}, {code: 'C8', hex: '#0F54C0'},
+            {code: 'C9', hex: '#324BCA'}, {code: 'C10', hex: '#3EBCE2'}, {code: 'C11', hex: '#28DDDE'}, {code: 'C12', hex: '#1C334D'},
+            {code: 'C13', hex: '#CDE8FF'}, {code: 'C14', hex: '#D5FDFF'}, {code: 'C15', hex: '#22C4C6'}, {code: 'C16', hex: '#1557A8'},
+            {code: 'C17', hex: '#04D1F6'}, {code: 'C18', hex: '#1D3344'}, {code: 'C19', hex: '#1887A2'}, {code: 'C20', hex: '#176DAF'},
+            {code: 'C21', hex: '#BEDDFF'}, {code: 'C22', hex: '#67B4BE'}, {code: 'C23', hex: '#C8E2FF'}, {code: 'C24', hex: '#7CC4FF'},
+            {code: 'C25', hex: '#A9E5E5'}, {code: 'C26', hex: '#3CAED8'}, {code: 'C27', hex: '#D3DFFA'}, {code: 'C28', hex: '#BBCFED'},
+            {code: 'C29', hex: '#34488E'},
+
+            // D Series: Purples
+            {code: 'D1', hex: '#AEB4F2'}, {code: 'D2', hex: '#858EDD'}, {code: 'D3', hex: '#2F54AF'}, {code: 'D4', hex: '#182A84'}, 
+            {code: 'D5', hex: '#B843C5'}, {code: 'D6', hex: '#AC7BDE'}, {code: 'D7', hex: '#8854B3'}, {code: 'D8', hex: '#E2D3FF'},
+            {code: 'D9', hex: '#D5B9F8'}, {code: 'D10', hex: '#361851'}, {code: 'D11', hex: '#B9BAE1'}, {code: 'D12', hex: '#DE9AD4'},
+            {code: 'D13', hex: '#B90095'}, {code: 'D14', hex: '#8B279B'}, {code: 'D15', hex: '#2F1F90'}, {code: 'D16', hex: '#E3E1EE'},
+            {code: 'D17', hex: '#C4D4F6'}, {code: 'D18', hex: '#A45EC7'}, {code: 'D19', hex: '#D8C3D7'}, {code: 'D20', hex: '#9C32B2'},
+            {code: 'D21', hex: '#9A009B'}, {code: 'D22', hex: '#333A95'}, {code: 'D23', hex: '#EBDAFC'}, {code: '7786E5', hex: '#7786E5'},
+            {code: 'D25', hex: '#494FC7'}, {code: 'D26', hex: '#DFC2F8'},
+
+            // E Series: Pinks
+            {code: 'E1', hex: '#FDD3CC'}, {code: 'E2', hex: '#FEC0DF'}, {code: 'E3', hex: '#FFB7E7'}, {code: 'E4', hex: '#E8649E'},
+            {code: 'E5', hex: '#F551A2'}, {code: 'E6', hex: '#F13D74'}, {code: 'E7', hex: '#C63478'}, {code: 'E8', hex: '#FFDBE9'},
+            {code: 'E9', hex: '#E970CC'}, {code: 'E10', hex: '#D33793'}, {code: 'E11', hex: '#FCDDD2'}, {code: 'E12', hex: '#F78FC3'},
+            {code: 'E13', hex: '#B5006D'}, {code: 'E14', hex: '#FFD1BA'}, {code: 'E15', hex: '#F8C7C9'}, {code: 'E16', hex: '#FFF3EB'},
+            {code: 'E17', hex: '#FFE2EA'}, {code: 'E18', hex: '#FFC7DB'}, {code: 'E19', hex: '#FEBAD5'}, {code: 'E20', hex: '#D8C7D1'},
+            {code: 'E21', hex: '#BD9DA1'}, {code: 'E22', hex: '#B785A1'}, {code: 'E23', hex: '#937A8D'}, {code: 'E24', hex: '#E1BCE8'},
+
+            // F Series: Reds
+            {code: 'F1', hex: '#FD957B'}, {code: 'F2', hex: '#FC3D46'}, {code: 'F3', hex: '#F74941'}, {code: 'F4', hex: '#FC283C'},
+            {code: 'F5', hex: '#E7002F'}, {code: 'F6', hex: '#943630'}, {code: 'F7', hex: '#971937'}, {code: 'F8', hex: '#BC0028'},
+            {code: 'F9', hex: '#E2677A'}, {code: 'F10', hex: '#8A4526'}, {code: 'F11', hex: '#5A2121'}, {code: 'F12', hex: '#FD4E6A'},
+            {code: 'F13', hex: '#F35744'}, {code: 'F14', hex: '#FFA9AD'}, {code: 'F15', hex: '#D30022'}, {code: 'F16', hex: '#FEC2A6'},
+            {code: 'F17', hex: '#E69C79'}, {code: 'F18', hex: '#D37C46'}, {code: 'F19', hex: '#C1444A'}, {code: 'F20', hex: '#CD9391'}, 
+            {code: 'F21', hex: '#F7B4C6'}, {code: 'F22', hex: '#FDC0D0'}, {code: 'F23', hex: '#F67E66'}, {code: 'F24', hex: '#E698AA'},
+            {code: 'F25', hex: '#E54B4F'},
+
+            // G Series: Browns
+            {code: 'G1', hex: '#FFE2CE'}, {code: 'G2', hex: '#FFC4AA'}, {code: 'G3', hex: '#F4C3A5'}, {code: 'G4', hex: '#E1B383'}, 
+            {code: 'G5', hex: '#EDB045'}, {code: 'G6', hex: '#E99C17'}, {code: 'G7', hex: '#9D5B3E'}, {code: 'G8', hex: '#753832'},
+            {code: 'G9', hex: '#E6B483'}, {code: 'G10', hex: '#D98C39'}, {code: 'G11', hex: '#E0C593'}, {code: 'G12', hex: '#FFC890'}, 
+            {code: 'G13', hex: '#B7714A'}, {code: 'G14', hex: '#8D614C'}, {code: 'G15', hex: '#FCF9E0'}, {code: 'G16', hex: '#F2D9BA'},
+            {code: 'G17', hex: '#78524B'}, {code: 'G18', hex: '#FFE4CC'}, {code: 'G19', hex: '#E07935'}, {code: 'G20', hex: '#A94023'},
+            {code: 'G21', hex: '#B88558'},
+
+            // H Series: Greys, Blacks, & Whites
+            {code: 'H1', hex: '#FDFBFF'}, {code: 'H2', hex: '#FEFFFF'}, {code: 'H3', hex: '#B6B1BA'}, {code: 'H4', hex: '#89858C'},
+            {code: 'H5', hex: '#48464E'}, {code: 'H6', hex: '#2F2B2F'}, {code: 'H7', hex: '#000000'}, {code: 'H8', hex: '#E7D6DB'},
+            {code: 'H9', hex: '#EDEDED'}, {code: 'H10', hex: '#EEE9EA'}, {code: 'H11', hex: '#CECDD5'}, {code: 'H12', hex: '#FFF5ED'},
+            {code: 'H13', hex: '#F5ECD2'}, {code: 'H14', hex: '#CFD7D3'}, {code: 'H15', hex: '#98A6A8'}, {code: 'H16', hex: '#1D1414'},
+            {code: 'H17', hex: '#F1EDED'}, {code: 'H18', hex: '#FFFDF0'}, {code: 'H19', hex: '#F6EFE2'}, {code: 'H20', hex: '#949FA3'},
+            {code: 'H21', hex: '#FFFBE1'}, {code: 'H22', hex: '#CACAD4'}, {code: 'H23', hex: '#9A9D94'},
+
+            // M Series: Muted & Dusty Tones
+            {code: 'M1', hex: '#BCC6B8'}, {code: 'M2', hex: '#8AA386'}, {code: 'M3', hex: '#697D80'}, {code: 'M4', hex: '#E3D2BC'},
+            {code: 'M5', hex: '#D0CCAA'}, {code: 'M6', hex: '#B0A782'}, {code: 'M7', hex: '#B4A497'}, {code: 'M8', hex: '#B38281'},
+            {code: 'M9', hex: '#A58767'}, {code: 'M10', hex: '#C5B2BC'}, {code: 'M11', hex: '#9F7594'}, {code: 'M12', hex: '#644749'},
+            {code: 'M13', hex: '#D19066'}, {code: 'M14', hex: '#C77362'}, {code: 'M15', hex: '#757D78'}
+        ];
 
         /* --- ADVANCED COLOR MATH HELPERS --- */
         function hexToRgb(hex) {
@@ -1368,71 +1437,116 @@
             let b = parseInt(hex.substring(5, 7), 16);
             return { r, g, b };
         }
+
         function rgbToXyz(r, g, b) {
-            let _r = (r / 255), _g = (g / 255), _b = (b / 255);
+            let _r = (r / 255);
+            let _g = (g / 255);
+            let _b = (b / 255);
+
             _r = _r > 0.04045 ? Math.pow((_r + 0.055) / 1.055, 2.4) : _r / 12.92;
             _g = _g > 0.04045 ? Math.pow((_g + 0.055) / 1.055, 2.4) : _g / 12.92;
             _b = _b > 0.04045 ? Math.pow((_b + 0.055) / 1.055, 2.4) : _b / 12.92;
-            return { x: _r * 41.24 + _g * 35.76 + _b * 18.05, y: _r * 21.26 + _g * 71.52 + _b * 7.22, z: _r * 1.93 + _g * 11.92 + _b * 95.05 };
+
+            _r = _r * 100; _g = _g * 100; _b = _b * 100;
+
+            return {
+                x: _r * 0.4124 + _g * 0.3576 + _b * 0.1805,
+                y: _r * 0.2126 + _g * 0.7152 + _b * 0.0722,
+                z: _r * 0.0193 + _g * 0.1192 + _b * 0.9505
+            };
         }
+
         function xyzToLab(x, y, z) {
-            let _x = x / 95.047, _y = y / 100.0, _z = z / 108.883;
+            let _x = x / 95.047;
+            let _y = y / 100.000;
+            let _z = z / 108.883;
+
             _x = _x > 0.008856 ? Math.pow(_x, 1/3) : (7.787 * _x) + (16 / 116);
             _y = _y > 0.008856 ? Math.pow(_y, 1/3) : (7.787 * _y) + (16 / 116);
             _z = _z > 0.008856 ? Math.pow(_z, 1/3) : (7.787 * _z) + (16 / 116);
-            return { l: (116 * _y) - 16, a: 500 * (_x - _y), b: 200 * (_y - _z) };
+
+            return {
+                l: (116 * _y) - 16,
+                a: 500 * (_x - _y),
+                b: 200 * (_y - _z)
+            };
         }
-        function rgbToLab(r, g, b) { const xyz = rgbToXyz(r, g, b); return xyzToLab(xyz.x, xyz.y, xyz.z); }
+
+        function rgbToLab(r, g, b) {
+            const xyz = rgbToXyz(r, g, b);
+            return xyzToLab(xyz.x, xyz.y, xyz.z);
+        }
+
         function rgbToHsv(r, g, b) {
             let rabs = r/255, gabs = g/255, babs = b/255;
             let v = Math.max(rabs, gabs, babs), diff = v - Math.min(rabs, gabs, babs);
-            let h = 0, s = v === 0 ? 0 : diff / v;
+            let diffc = c => (v - c) / 6 / diff + 1 / 2;
+            let h = 0, s = 0;
             if (diff !== 0) {
-                if (rabs === v) h = (gabs - babs) / diff + (gabs < babs ? 6 : 0);
-                else if (gabs === v) h = (babs - rabs) / diff + 2;
-                else if (babs === v) h = (rabs - gabs) / diff + 4;
-                h /= 6;
+                s = diff / v;
+                let rr = diffc(rabs), gg = diffc(gabs), bb = diffc(babs);
+                if (rabs === v) h = bb - gg;
+                else if (gabs === v) h = (1 / 3) + rr - bb;
+                else if (babs === v) h = (2 / 3) + gg - rr;
+                if (h < 0) h += 1;
+                else if (h > 1) h -= 1;
             }
             return { h: Math.round(h * 360), s: s * 100, v: v * 100 };
         }
+
         function rgbToHsl(r, g, b) {
             r /= 255; g /= 255; b /= 255;
             const max = Math.max(r, g, b), min = Math.min(r, g, b);
-            let h = 0, s = 0, l = (max + min) / 2;
-            if (max !== min) {
+            let h, s, l = (max + min) / 2;
+            if (max === min) { h = s = 0; }
+            else {
                 const d = max - min;
                 s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-                if (max === r) h = (g - b) / d + (g < b ? 6 : 0);
-                else if (max === g) h = (b - r) / d + 2;
-                else if (max === b) h = (r - g) / d + 4;
+                switch (max) {
+                    case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                    case g: h = (b - r) / d + 2; break;
+                    case b: h = (r - g) / d + 4; break;
+                }
                 h /= 6;
             }
             return { h: h * 360, s: s * 100, l: l * 100 };
         }
+
         function rgbToCmyk(r, g, b) {
-            let c = 1 - (r / 255), m = 1 - (g / 255), y = 1 - (b / 255);
+            let c = 1 - (r / 255);
+            let m = 1 - (g / 255);
+            let y = 1 - (b / 255);
             let k = Math.min(c, Math.min(m, y));
             if (k === 1) return { c: 0, m: 0, y: 0, k: 1 };
-            return { c: (c - k) / (1 - k), m: (m - k) / (1 - k), y: (y - k) / (1 - k), k: k };
+            return {
+                c: (c - k) / (1 - k),
+                m: (m - k) / (1 - k),
+                y: (y - k) / (1 - k),
+                k: k
+            };
         }
 
         let paletteData = [];
         let userOverrides = {};
         let activeBrushColor = 'H7';
         let isDrawing = false;
-        let baseImageWidth = 30;
-        let baseImageHeight = 30;
 
         function initPaletteData() {
             const paletteType = document.getElementById('paletteSelect').value;
             const sourcePalette = paletteType === 'extended' ? extendedPalette : standardPalette;
+            
             paletteData = sourcePalette.map(color => {
                 const rgb = hexToRgb(color.hex);
                 return {
-                    ...color, rgb: rgb, lab: rgbToLab(rgb.r, rgb.g, rgb.b),
-                    hsv: rgbToHsv(rgb.r, rgb.g, rgb.b), hsl: rgbToHsl(rgb.r, rgb.g, rgb.b), cmyk: rgbToCmyk(rgb.r, rgb.g, rgb.b)
+                    ...color,
+                    rgb: rgb,
+                    lab: rgbToLab(rgb.r, rgb.g, rgb.b),
+                    hsv: rgbToHsv(rgb.r, rgb.g, rgb.b),
+                    hsl: rgbToHsl(rgb.r, rgb.g, rgb.b),
+                    cmyk: rgbToCmyk(rgb.r, rgb.g, rgb.b)
                 };
             });
+
             renderQuickPalette();
             updateBrushUI();
         }
@@ -1440,39 +1554,50 @@
         function renderQuickPalette() {
             const container = document.getElementById('quickPaletteContainer');
             if (!container) return;
+            
             container.innerHTML = '';
             paletteData.forEach(color => {
                 const swatch = document.createElement('div');
                 swatch.className = 'quick-swatch';
                 swatch.style.backgroundColor = color.hex;
-                swatch.title = `${color.code}`;
+                swatch.title = `${color.code} (${color.hex})`;
                 swatch.dataset.code = color.code;
-                if (color.code === activeBrushColor) swatch.classList.add('active-brush');
-                swatch.addEventListener('click', () => selectBrushFromTable(color.code));
+                
+                if (color.code === activeBrushColor) {
+                    swatch.classList.add('active-brush');
+                }
+                
+                swatch.addEventListener('click', () => {
+                    selectBrushFromTable(color.code);
+                });
+                
                 container.appendChild(swatch);
             });
         }
 
         function updateBrushUI() {
-            const currentObj = paletteData.find(c => c.code === activeBrushColor) || paletteData[0];
+            const currentObj = paletteData.find(c => c.code === activeBrushColor) || paletteData.find(c => c.code === 'H7') || paletteData[0];
             if (currentObj) {
                 activeBrushColor = currentObj.code;
                 document.getElementById('brushSwatch').style.backgroundColor = currentObj.hex;
                 document.getElementById('brushCode').innerText = currentObj.code;
                 document.getElementById('brushHex').innerText = currentObj.hex;
             }
+
             document.querySelectorAll('.quick-swatch').forEach(swatch => {
-                swatch.classList.toggle('active-brush', swatch.dataset.code === activeBrushColor);
+                if (swatch.dataset.code === activeBrushColor) {
+                    swatch.classList.add('active-brush');
+                } else {
+                    swatch.classList.remove('active-brush');
+                }
             });
         }
 
-        function selectBrushFromTable(code) { activeBrushColor = code; updateBrushUI(); }
-
-        function findClosestColor(r, g, b, algorithm, restrictToGrey = false, h7Gravity = 0) {
+        function findClosestColor(r, g, b, algorithm, restrictToGrey = false, h7Gravity = 0, leftNeighborCode = null, topNeighborCode = null) {
             let minDistance = Infinity;
             let closestColor = paletteData[0];
+            
             let targetLab, targetHsv, targetHsl, targetCmyk;
-
             if (algorithm === 'cielab76') targetLab = rgbToLab(r, g, b);
             if (algorithm === 'hsv') targetHsv = rgbToHsv(r, g, b);
             if (algorithm === 'hsl') targetHsl = rgbToHsl(r, g, b);
@@ -1480,51 +1605,91 @@
 
             for (let i = 0; i < paletteData.length; i++) {
                 const color = paletteData[i];
-                if (restrictToGrey && !color.code.startsWith('H')) continue;
 
-                const dR = r - color.rgb.r, dG = g - color.rgb.g, dB = b - color.rgb.b;
+                if (restrictToGrey && !color.code.startsWith('H')) {
+                    continue;
+                }
+
+                const dR = r - color.rgb.r;
+                const dG = g - color.rgb.g;
+                const dB = b - color.rgb.b;
                 let distance = 0;
 
                 switch(algorithm) {
-                    case 'euclidean': distance = Math.sqrt((dR*dR) + (dG*dG) + (dB*dB)); break;
+                    case 'euclidean':
+                        distance = Math.sqrt((dR*dR) + (dG*dG) + (dB*dB));
+                        break;
                     case 'redmean':
                         const rMean = (r + color.rgb.r) / 2;
-                        distance = Math.sqrt((2 + rMean/256)*(dR*dR) + 4*(dG*dG) + (2 + (255-rMean)/256)*(dB*dB));
+                        const weightR = 2 + rMean / 256;
+                        const weightB = 2 + (255 - rMean) / 256;
+                        distance = Math.sqrt(weightR * (dR*dR) + 4.0 * (dG*dG) + weightB * (dB*dB));
                         break;
-                    case 'weighted_rgb': distance = Math.sqrt(0.3*(dR*dR) + 0.59*(dG*dG) + 0.11*(dB*dB)); break;
-                    case 'luma': distance = Math.sqrt(Math.pow(dR*0.299, 2) + Math.pow(dG*0.587, 2) + Math.pow(dB*0.114, 2)); break;
-                    case 'manhattan': distance = Math.abs(dR) + Math.abs(dG) + Math.abs(dB); break;
-                    case 'chebyshev': distance = Math.max(Math.abs(dR), Math.abs(dG), Math.abs(dB)); break;
-                    case 'cielab76': distance = Math.sqrt(Math.pow(targetLab.l - color.lab.l, 2) + Math.pow(targetLab.a - color.lab.a, 2) + Math.pow(targetLab.b - color.lab.b, 2)); break;
-                    case 'hsv': distance = Math.sqrt(Math.pow(Math.min(Math.abs(targetHsv.h - color.hsv.h), 360 - Math.abs(targetHsv.h - color.hsv.h))/180, 2) + Math.pow((targetHsv.s - color.hsv.s)/100, 2) + Math.pow((targetHsv.v - color.hsv.v)/100, 2)); break;
-                    case 'hsl': distance = Math.sqrt(Math.pow(Math.min(Math.abs(targetHsl.h - color.hsl.h), 360 - Math.abs(targetHsl.h - color.hsl.h))/180, 2) + Math.pow((targetHsl.s - color.hsl.s)/100, 2) + Math.pow((targetHsl.l - color.hsl.l)/100, 2)); break;
-                    case 'cmyk': distance = Math.sqrt(Math.pow(targetCmyk.c - color.cmyk.c, 2) + Math.pow(targetCmyk.m - color.cmyk.m, 2) + Math.pow(targetCmyk.y - color.cmyk.y, 2) + Math.pow(targetCmyk.k - color.cmyk.k, 2)); break;
+                    case 'weighted_rgb':
+                        distance = Math.sqrt(0.3*(dR*dR) + 0.59*(dG*dG) + 0.11*(dB*dB));
+                        break;
+                    case 'luma':
+                        distance = Math.sqrt(Math.pow(dR*0.299, 2) + Math.pow(dG*0.587, 2) + Math.pow(dB*0.114, 2));
+                        break;
+                    case 'manhattan':
+                        distance = Math.abs(dR) + Math.abs(dG) + Math.abs(dB);
+                        break;
+                    case 'chebyshev':
+                        distance = Math.max(Math.abs(dR), Math.abs(dG), Math.abs(dB));
+                        break;
+                    case 'cielab76':
+                        const dL = targetLab.l - color.lab.l;
+                        const da = targetLab.a - color.lab.a;
+                        const db = targetLab.b - color.lab.b;
+                        distance = Math.sqrt((dL*dL) + (da*da) + (db*db));
+                        break;
+                    case 'hsv':
+                        const dhHSV = Math.min(Math.abs(targetHsv.h - color.hsv.h), 360 - Math.abs(targetHsv.h - color.hsv.h)) / 360;
+                        const dsHSV = (targetHsv.s - color.hsv.s) / 100;
+                        const dvHSV = (targetHsv.v - color.hsv.v) / 100;
+                        distance = Math.sqrt((dhHSV*dhHSV*4) + (dsHSV*dsHSV) + (dvHSV*dvHSV));
+                        break;
+                    case 'hsl':
+                        const dhHSL = Math.min(Math.abs(targetHsl.h - color.hsl.h), 360 - Math.abs(targetHsl.h - color.hsl.h)) / 360;
+                        const dsHSL = (targetHsl.s - color.hsl.s) / 100;
+                        const dlHSL = (targetHsl.l - color.hsl.l) / 100;
+                        distance = Math.sqrt((dhHSL*dhHSL*4) + (dsHSL*dsHSL) + (dlHSL*dlHSL));
+                        break;
+                    case 'cmyk':
+                        const dC = targetCmyk.c - color.cmyk.c;
+                        const dM = targetCmyk.m - color.cmyk.m;
+                        const dY = targetCmyk.y - color.cmyk.y;
+                        const dK = targetCmyk.k - color.cmyk.k;
+                        distance = Math.sqrt((dC*dC) + (dM*dM) + (dY*dY) + (dK*dK));
+                        break;
                 }
 
-                if (color.code === 'H7' && h7Gravity > 0) distance -= (h7Gravity * 0.5);
+                if (color.code === 'H7' && h7Gravity > 0) {
+                    const algorithmFactor = (algorithm === 'cielab76' || algorithm === 'hsv' || algorithm === 'hsl' || algorithm === 'cmyk') ? 0.35 : 1.8;
+                    distance -= (h7Gravity * algorithmFactor);
+                }
 
-                if (distance < minDistance) { minDistance = distance; closestColor = color; }
+                if (color.code !== 'H7') {
+                    if (color.code === leftNeighborCode || color.code === topNeighborCode) {
+                        const biasWeight = (algorithm === 'cielab76' || algorithm === 'hsv' || algorithm === 'hsl' || algorithm === 'cmyk') ? 2.2 : 10.5;
+                        distance -= biasWeight; 
+                    }
+                }
+
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closestColor = color;
+                }
             }
             return closestColor;
         }
 
-        function getContrastYIQ(r, g, b) { return (((r * 299) + (g * 587) + (b * 114)) / 1000) >= 128 ? '#000000' : '#FFFFFF'; }
-
-        function generateBeadTable(beadCounts) {
-            const container = document.getElementById('beadTableContent');
-            const parent = document.getElementById('beadTableContainer');
-            if (!container || !parent) return;
-            if (Object.keys(beadCounts).length === 0) { parent.style.display = 'none'; return; }
-
-            parent.style.display = 'block';
-            let html = '<table><thead><tr><th>Code</th><th>Color Swatch</th><th>Beads Required</th></tr></thead><tbody>';
-            Object.keys(beadCounts).sort((a,b) => beadCounts[b].count - beadCounts[a].count).forEach(code => {
-                html += `<tr class="interactive-row" onclick="selectBrushFromTable('${code}')"><td><strong>${code}</strong></td><td><span class="color-swatch" style="background-color: ${beadCounts[code].hex}"></span> ${beadCounts[code].hex}</td><td>${beadCounts[code].count}</td></tr>`;
-            });
-            container.innerHTML = html + '</tbody></table>';
+        function getContrastYIQ(r, g, b) {
+            const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+            return (yiq >= 128) ? '#000000' : '#FFFFFF';
         }
 
-        // DOM Handles
+        // Setup DOM Elements
         const imageUpload = document.getElementById('imageUpload');
         const autoCropInput = document.getElementById('autoCrop');
         const downloadBtn = document.getElementById('downloadBtn');
@@ -1537,12 +1702,15 @@
         const processingModeSelect = document.getElementById('processingMode');
         const paletteSelectInput = document.getElementById('paletteSelect');
         const colorAlgoSelect = document.getElementById('colorAlgo');
+        
         const outlineModeSelect = document.getElementById('outlineMode');
         const outlineThresholdInput = document.getElementById('outlineThreshold');
         const thresholdLabel = document.getElementById('thresholdLabel');
         const h7GravityInput = document.getElementById('h7Gravity');
         const gravityLabel = document.getElementById('gravityLabel');
         const editorToolSelect = document.getElementById('editorToolSelect');
+
+        // Layout Resizing & Sizing Elements
         const layoutResizer = document.getElementById('layoutResizer');
         const dashboardLayout = document.querySelector('.dashboard-layout');
         const canvasSizingMode = document.getElementById('canvasSizingMode');
@@ -1555,190 +1723,182 @@
         const fusedCtx = fusedCanvas.getContext('2d');
 
         let croppedImageData = null;
-        let baseCropCanvas = null;
+        let baseCropCanvas = null; // Unflipped cropped source, kept so flips can be re-applied non-destructively
         let flipHorizontal = false;
         let flipVertical = false;
+        let initialBaseW = 30;
+        let initialBaseH = 30;
 
         const flipHorizontalBtn = document.getElementById('flipHorizontalBtn');
         const flipVerticalBtn = document.getElementById('flipVerticalBtn');
         const thumbPreview = document.getElementById('thumbPreview');
 
-        const hamburgerBtn = document.getElementById('hamburgerBtn');
-        const drawerCloseBtn = document.getElementById('drawerCloseBtn');
-        const drawerOverlay = document.getElementById('drawerOverlay');
-        const sidebarDrawer = document.getElementById('sidebarDrawer');
-
-        if (hamburgerBtn && sidebarDrawer && drawerOverlay && drawerCloseBtn) {
-            hamburgerBtn.addEventListener('click', () => {
-                sidebarDrawer.classList.add('open');
-                drawerOverlay.classList.add('visible');
-                hamburgerBtn.setAttribute('aria-expanded', 'true');
-            });
-            const closeDrawer = () => {
-                sidebarDrawer.classList.remove('open');
-                drawerOverlay.classList.remove('visible');
-                hamburgerBtn.setAttribute('aria-expanded', 'false');
-            };
-            drawerCloseBtn.addEventListener('click', closeDrawer);
-            drawerOverlay.addEventListener('click', closeDrawer);
-        }
-
-        function updateGridDimensionsFromScale() {
-            const scale = parseFloat(scalePercentInput.value) / 100;
-            gridWidthInput.value = Math.max(5, Math.min(200, Math.round(baseImageWidth * scale)));
-            gridHeightInput.value = Math.max(5, Math.min(200, Math.round(baseImageHeight * scale)));
-        }
-
-        scalePercentInput.addEventListener('change', () => { updateGridDimensionsFromScale(); generatePattern(); });
-        scalePercentInput.addEventListener('input', () => { updateGridDimensionsFromScale(); generatePattern(); });
-
         function buildFlippedCanvas(source, fh, fv) {
             if (!fh && !fv) return source;
             const c = document.createElement('canvas');
-            c.width = source.width; c.height = source.height;
+            c.width = source.width;
+            c.height = source.height;
             const fCtx = c.getContext('2d');
+            fCtx.save();
             fCtx.translate(fh ? source.width : 0, fv ? source.height : 0);
             fCtx.scale(fh ? -1 : 1, fv ? -1 : 1);
             fCtx.drawImage(source, 0, 0);
+            fCtx.restore();
             return c;
+        }
+
+        function updateThumbPreviewTransform() {
+            const scaleX = flipHorizontal ? -1 : 1;
+            const scaleY = flipVertical ? -1 : 1;
+            thumbPreview.style.transform = `scale(${scaleX}, ${scaleY})`;
         }
 
         function applyFlipState() {
             if (!baseCropCanvas) return;
             croppedImageData = buildFlippedCanvas(baseCropCanvas, flipHorizontal, flipVertical);
-            thumbPreview.style.transform = `scale(${flipHorizontal ? -1 : 1}, ${flipVertical ? -1 : 1})`;
+            updateThumbPreviewTransform();
             generatePattern();
         }
 
-        flipHorizontalBtn.addEventListener('click', () => { flipHorizontal = !flipHorizontal; flipHorizontalBtn.classList.toggle('active', flipHorizontal); applyFlipState(); });
-        flipVerticalBtn.addEventListener('click', () => { flipVertical = !flipVertical; flipVerticalBtn.classList.toggle('active', flipVertical); applyFlipState(); });
+        flipHorizontalBtn.addEventListener('click', () => {
+            flipHorizontal = !flipHorizontal;
+            flipHorizontalBtn.classList.toggle('active', flipHorizontal);
+            applyFlipState();
+        });
+
+        flipVerticalBtn.addEventListener('click', () => {
+            flipVertical = !flipVertical;
+            flipVerticalBtn.classList.toggle('active', flipVertical);
+            applyFlipState();
+        });
 
         initPaletteData();
 
-        /* --- DRAGGABLE SIDEBAR LOGIC --- */
+        /* --- DRAGGABLE SIDEBAR PARTITION LOGIC --- */
         if (layoutResizer && dashboardLayout) {
-            const startDrag = (e) => {
+            layoutResizer.addEventListener('mousedown', (e) => {
                 e.preventDefault();
                 layoutResizer.classList.add('dragging');
-                document.addEventListener('mousemove', moveDrag);
-                document.addEventListener('mouseup', stopDrag);
-            };
-            const moveDrag = (e) => {
+                document.addEventListener('mousemove', handleLayoutMove);
+                document.addEventListener('mouseup', handleLayoutUp);
+            });
+
+            layoutResizer.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 1) {
+                    layoutResizer.classList.add('dragging');
+                    document.addEventListener('touchmove', handleLayoutTouchMove, { passive: false });
+                    document.addEventListener('touchend', handleLayoutTouchEnd);
+                }
+            });
+
+            function handleLayoutMove(e) {
                 const bounds = dashboardLayout.getBoundingClientRect();
                 const targetWidth = e.clientX - bounds.left;
-                if (targetWidth > 220 && targetWidth < 600) dashboardLayout.style.gridTemplateColumns = `${targetWidth}px 8px 1fr`;
-            };
-            const stopDrag = () => {
+                if (targetWidth > 220 && targetWidth < 600) {
+                    dashboardLayout.style.gridTemplateColumns = `${targetWidth}px 8px 1fr`;
+                }
+            }
+
+            function handleLayoutTouchMove(e) {
+                if (e.touches.length === 1) {
+                    const bounds = dashboardLayout.getBoundingClientRect();
+                    const targetWidth = e.touches[0].clientX - bounds.left;
+                    if (targetWidth > 220 && targetWidth < 600) {
+                        dashboardLayout.style.gridTemplateColumns = `${targetWidth}px 8px 1fr`;
+                    }
+                    e.preventDefault();
+                }
+            }
+
+            function handleLayoutUp() {
                 layoutResizer.classList.remove('dragging');
-                document.removeEventListener('mousemove', moveDrag);
-                document.removeEventListener('mouseup', stopDrag);
-            };
-            layoutResizer.addEventListener('mousedown', startDrag);
+                document.removeEventListener('mousemove', handleLayoutMove);
+                document.removeEventListener('mouseup', handleLayoutUp);
+            }
+
+            function handleLayoutTouchEnd() {
+                layoutResizer.classList.remove('dragging');
+                document.removeEventListener('touchmove', handleLayoutTouchMove);
+                document.removeEventListener('touchend', handleLayoutTouchEnd);
+            }
         }
 
+        /* --- CANVAS VIEWPORT DISPLAY FITTING ENGINE --- */
         function adjustCanvasDisplaySizing() {
             const chosenMode = canvasSizingMode.value;
             const chosenSize = canvasSizeSlider.value;
+            
             canvasSizeValue.innerText = `${chosenSize}px`;
-            canvasGrid.className = `canvas-grid mode-${chosenMode}`;
-            document.documentElement.style.setProperty('--canvas-max-width', chosenMode === 'fit-width' ? '100%' : `${chosenSize}px`);
-            canvasSizeSlider.disabled = (chosenMode === 'fit-width');
+            
+            canvasGrid.classList.remove('mode-scrollable', 'mode-fit-width', 'mode-fit-screen');
+            canvasGrid.classList.add(`mode-${chosenMode}`);
+            
+            if (chosenMode === 'fit-width') {
+                document.documentElement.style.setProperty('--canvas-max-width', '100%');
+                canvasSizeSlider.disabled = true;
+            } else {
+                document.documentElement.style.setProperty('--canvas-max-width', `${chosenSize}px`);
+                canvasSizeSlider.disabled = false;
+            }
         }
+
         canvasSizingMode.addEventListener('change', adjustCanvasDisplaySizing);
         canvasSizeSlider.addEventListener('input', adjustCanvasDisplaySizing);
-        adjustCanvasDisplaySizing();
+        adjustCanvasDisplaySizing(); // Apply column-fit sizing limits immediately
 
-        /* --- GRID GEOMETRY TOGGLE HANDLERS --- */
-        document.querySelectorAll('.geo-step-btn').forEach(button => {
-            button.addEventListener('click', () => {
-                const targetId = button.getAttribute('data-target');
-                const step = parseInt(button.getAttribute('data-step'));
-                const input = document.getElementById(targetId);
-                if (!input) return;
-                let val = parseInt(input.value) + step;
-                input.value = Math.max(parseInt(input.min) || 1, Math.min(parseInt(input.max) || 999, val));
-                input.dispatchEvent(new Event('change'));
-            });
-        });
-
+        /* --- INDEPENDENT PER-CANVAS RESIZE CONTROLS (Base Grid / Fused Simulation) --- */
         function setupCanvasResizeControl(containerId) {
             const container = document.getElementById(containerId);
             if (!container) return;
+
             const scaleWrapper = container.querySelector('.canvas-scale-wrapper');
             const controls = container.querySelector('.canvas-resize-controls');
             const slider = controls.querySelector('.canvas-size-slider');
+            const decBtn = controls.querySelector('.size-step-btn[data-step="-1"]');
+            const incBtn = controls.querySelector('.size-step-btn[data-step="1"]');
+            const resetBtn = controls.querySelector('.size-reset-btn');
             const valueLabel = controls.querySelector('.canvas-size-value');
-            
-            const applyWidth = (px) => {
+            const stepAmount = 20;
+
+            function syncSliderToCurrentWidth() {
+                const currentWidth = Math.round(scaleWrapper.getBoundingClientRect().width);
+                const clamped = Math.min(Math.max(currentWidth, parseInt(slider.min)), parseInt(slider.max));
+                slider.value = clamped;
+                valueLabel.textContent = `${clamped}px`;
+            }
+
+            function applyWidth(px) {
                 const clamped = Math.min(Math.max(px, parseInt(slider.min)), parseInt(slider.max));
+                // Only the canvas's own wrapper shrinks/grows; the card, border, padding
+                // and toolbar stay fixed so the surrounding layout never shifts.
                 scaleWrapper.style.maxWidth = `${clamped}px`;
                 slider.value = clamped;
                 valueLabel.textContent = `${clamped}px`;
-            };
+            }
+
             slider.addEventListener('input', () => applyWidth(parseInt(slider.value)));
-            controls.querySelector('.size-step-btn[data-step="-1"]').addEventListener('click', () => applyWidth(parseInt(slider.value) - 20));
-            controls.querySelector('.size-step-btn[data-step="1"]').addEventListener('click', () => applyWidth(parseInt(slider.value) + 20));
-            controls.querySelector('.size-reset-btn').addEventListener('click', () => {
+
+            decBtn.addEventListener('click', () => applyWidth(parseInt(slider.value) - stepAmount));
+            incBtn.addEventListener('click', () => applyWidth(parseInt(slider.value) + stepAmount));
+
+            resetBtn.addEventListener('click', () => {
                 scaleWrapper.style.removeProperty('max-width');
-                slider.value = 600; valueLabel.textContent = "100%";
+                requestAnimationFrame(syncSliderToCurrentWidth);
+            });
+
+            // Initialize the slider to reflect whatever size the global sizing controls produced
+            requestAnimationFrame(syncSliderToCurrentWidth);
+            window.addEventListener('resize', () => {
+                // Only auto-follow the viewport if the user hasn't set a manual override
+                if (!scaleWrapper.style.maxWidth) syncSliderToCurrentWidth();
             });
         }
+
         setupCanvasResizeControl('baseGridContainer');
-        setupCanvasResizeControl('blueprintContainer');
         setupCanvasResizeControl('fusedSimContainer');
+        setupCanvasResizeControl('blueprintContainer');
 
-        /* --- IMAGE FILE LOADER LOGIC --- */
-        imageUpload.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (evt) => {
-                const img = new Image();
-                img.onload = () => {
-                    const tempCanvas = document.createElement('canvas');
-                    tempCanvas.width = img.width; tempCanvas.height = img.height;
-                    const tempCtx = tempCanvas.getContext('2d');
-                    tempCtx.drawImage(img, 0, 0);
-
-                    if (autoCropInput.checked) {
-                        const imgData = tempCtx.getImageData(0, 0, img.width, img.height);
-                        let minX = img.width, maxX = 0, minY = img.height, maxY = 0, hasContent = false;
-                        for (let y = 0; y < img.height; y++) {
-                            for (let x = 0; x < img.width; x++) {
-                                const idx = (y * img.width + x) * 4;
-                                if (imgData.data[idx+3] > 20 && !(imgData.data[idx] > 240 && imgData.data[idx+1] > 240 && imgData.data[idx+2] > 240)) {
-                                    if (x < minX) minX = x; if (x > maxX) maxX = x;
-                                    if (y < minY) minY = y; if (y > maxY) maxY = y;
-                                    hasContent = true;
-                                }
-                            }
-                        }
-                        if (hasContent) {
-                            baseCropCanvas = document.createElement('canvas');
-                            baseCropCanvas.width = (maxX - minX) + 1; baseCropCanvas.height = (maxY - minY) + 1;
-                            baseCropCanvas.getContext('2d').drawImage(img, minX, minY, baseCropCanvas.width, baseCropCanvas.height, 0, 0, baseCropCanvas.width, baseCropCanvas.height);
-                        } else { baseCropCanvas = tempCanvas; }
-                    } else { baseCropCanvas = tempCanvas; }
-
-                    if (baseCropCanvas.width > baseCropCanvas.height) {
-                        baseImageWidth = 30; baseImageHeight = Math.max(5, Math.round(30 * (baseCropCanvas.height / baseCropCanvas.width)));
-                    } else {
-                        baseImageHeight = 30; baseImageWidth = Math.max(5, Math.round(30 * (baseCropCanvas.width / baseCropCanvas.height)));
-                    }
-
-                    userOverrides = {};
-                    updateGridDimensionsFromScale();
-                    thumbPreview.src = baseCropCanvas.toDataURL();
-                    document.getElementById('thumbPreviewContainer').style.display = 'block';
-                    downloadBtn.disabled = false;
-                    applyFlipState();
-                };
-                img.src = evt.target.result;
-            };
-            reader.readAsDataURL(file);
-        });
-
-        /* --- CORE ENGINE PATTERN GENERATOR --- */
+        /* --- ENGINE PATTERN GENERATOR --- */
         function generatePattern() {
             if (!croppedImageData) return;
 
@@ -1750,181 +1910,637 @@
             const h7GravityVal = parseFloat(h7GravityInput.value);
             const isPixelMode = processingModeSelect.value === 'pixel';
 
-            const cellSize = 24, axisOffset = 30;
+            const cellSize = 24; 
+            const axisOffset = 30; 
 
-            outputCanvas.width = (gridW * cellSize) + axisOffset; outputCanvas.height = (gridH * cellSize) + axisOffset;
-            baseCanvas.width = (gridW * cellSize) + axisOffset; baseCanvas.height = (gridH * cellSize) + axisOffset;
-            fusedCanvas.width = gridW * cellSize; fusedCanvas.height = gridH * cellSize;
+            outputCanvas.width = (gridW * cellSize) + axisOffset;
+            outputCanvas.height = (gridH * cellSize) + axisOffset;
+            
+            baseCanvas.width = (gridW * cellSize) + axisOffset;
+            baseCanvas.height = (gridH * cellSize) + axisOffset;
+
+            fusedCanvas.width = gridW * cellSize;
+            fusedCanvas.height = gridH * cellSize;
 
             const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = gridW; tempCanvas.height = gridH;
+            tempCanvas.width = gridW;
+            tempCanvas.height = gridH;
             const tempCtx = tempCanvas.getContext('2d');
+            
             tempCtx.imageSmoothingEnabled = !isPixelMode;
+            if ('mozImageSmoothingEnabled' in tempCtx) tempCtx.mozImageSmoothingEnabled = !isPixelMode;
+            if ('webkitImageSmoothingEnabled' in tempCtx) tempCtx.webkitImageSmoothingEnabled = !isPixelMode;
+            if ('msImageSmoothingEnabled' in tempCtx) tempCtx.msImageSmoothingEnabled = !isPixelMode;
+            
             tempCtx.drawImage(croppedImageData, 0, 0, gridW, gridH);
             const imgData = tempCtx.getImageData(0, 0, gridW, gridH).data;
 
-            baseCtx.fillStyle = '#FFFFFF'; baseCtx.fillRect(0, 0, baseCanvas.width, baseCanvas.height);
-            ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0, 0, outputCanvas.width, outputCanvas.height);
-            fusedCtx.fillStyle = '#E2E6EF'; fusedCtx.fillRect(0, 0, fusedCanvas.width, fusedCanvas.height);
+            let edgeMap = Array(gridH).fill().map(() => Array(gridW).fill(false));
+            
+            if (activeOutlineMode === 'spatial') {
+                const getAlpha = (px, py) => {
+                    if (px < 0 || px >= gridW || py < 0 || py >= gridH) return 0;
+                    return imgData[(py * gridW + px) * 4 + 3];
+                };
+                for (let y = 0; y < gridH; y++) {
+                    for (let x = 0; x < gridW; x++) {
+                        if (getAlpha(x, y) >= 128) {
+                            if (getAlpha(x-1, y) < 128 || getAlpha(x+1, y) < 128 || 
+                                getAlpha(x, y-1) < 128 || getAlpha(x, y+1) < 128) {
+                                edgeMap[y][x] = true;
+                            }
+                        }
+                    }
+                }
+            }
 
-            baseCtx.fillStyle = ctx.fillStyle = '#6B7280';
-            baseCtx.font = ctx.font = '10px sans-serif';
-            baseCtx.textAlign = ctx.textAlign = 'center';
-            baseCtx.textBaseline = ctx.textBaseline = 'middle';
+            if (activeOutlineMode === 'sobel') {
+                const getLuma = (px, py) => {
+                    const cx = Math.max(0, Math.min(gridW - 1, px));
+                    const cy = Math.max(0, Math.min(gridH - 1, py));
+                    const idx = (cy * gridW + cx) * 4;
+                    if (imgData[idx + 3] < 128) return 255;
+                    return (imgData[idx] * 0.299 + imgData[idx+1] * 0.587 + imgData[idx+2] * 0.114);
+                };
+                for (let y = 0; y < gridH; y++) {
+                    for (let x = 0; x < gridW; x++) {
+                        const gx = 
+                            -1*getLuma(x-1, y-1) + 1*getLuma(x+1, y-1) +
+                            -2*getLuma(x-1, y)   + 2*getLuma(x+1, y) +
+                            -1*getLuma(x-1, y+1) + 1*getLuma(x+1, y+1);
+                        const gy = 
+                            -1*getLuma(x-1, y-1) - 2*getLuma(x, y-1) - 1*getLuma(x+1, y-1) +
+                            1*getLuma(x-1, y+1) + 2*getLuma(x, y+1) + 1*getLuma(x+1, y+1);
+                        const magnitude = Math.sqrt(gx*gx + gy*gy);
+                        if (magnitude > currentThreshold) {
+                            edgeMap[y][x] = true;
+                        }
+                    }
+                }
+            }
 
-            for (let x = 0; x < gridW; x++) { if (x % 5 === 0 || x === gridW - 1) { ctx.fillText(x + 1, axisOffset + x * cellSize + cellSize / 2, 15); baseCtx.fillText(x + 1, axisOffset + x * cellSize + cellSize / 2, 15); } }
-            for (let y = 0; y < gridH; y++) { if (y % 5 === 0 || y === gridH - 1) { ctx.fillText(y + 1, 15, axisOffset + y * cellSize + cellSize / 2); baseCtx.fillText(y + 1, 15, axisOffset + y * cellSize + cellSize / 2); } }
+            const blackBeadColor = paletteData.find(color => color.code === 'H7') || paletteData[0];
 
-            const beadCounts = {};
+            [ctx, baseCtx].forEach(context => {
+                context.fillStyle = '#ffffff';
+                context.fillRect(0, 0, outputCanvas.width, outputCanvas.height);
+                context.textAlign = 'center';
+                context.textBaseline = 'middle';
+            });
+
+            fusedCtx.fillStyle = '#ffffff'; 
+            fusedCtx.fillRect(0, 0, fusedCanvas.width, fusedCanvas.height);
+
+            [ctx, baseCtx].forEach(context => {
+                context.fillStyle = '#333';
+                context.font = '12px Arial';
+                for (let x = 0; x < gridW; x++) {
+                    if ((x + 1) % 5 === 0 || x === 0) {
+                        context.fillText(x + 1, axisOffset + (x * cellSize) + (cellSize / 2), axisOffset / 2);
+                    }
+                }
+                for (let y = 0; y < gridH; y++) {
+                    if ((y + 1) % 5 === 0 || y === 0) {
+                        context.fillText(y + 1, axisOffset / 2, axisOffset + (y * cellSize) + (cellSize / 2));
+                    }
+                }
+            });
+
+            let beadCounts = {};
+            let assignedMatrix = Array(gridH).fill().map(() => Array(gridW).fill(null));
 
             for (let y = 0; y < gridH; y++) {
                 for (let x = 0; x < gridW; x++) {
-                    const idx = (y * gridW + x) * 4;
-                    if (imgData[idx+3] < 30) continue;
+                    const i = (y * gridW + x) * 4;
+                    const r = imgData[i];
+                    const g = imgData[i + 1];
+                    const b = imgData[i + 2];
+                    const a = imgData[i + 3];
 
-                    const cellKey = `${x},${y}`;
-                    let matchedColor = userOverrides[cellKey] ? paletteData.find(c => c.code === userOverrides[cellKey]) : null;
-
-                    if (!matchedColor) {
-                        let restrictToGrey = false;
-                        if (activeOutlineMode === 'luminance' && ((imgData[idx]+imgData[idx+1]+imgData[idx+2])/3) < currentThreshold) restrictToGrey = true;
-                        if (activeOutlineMode === 'sobel') {
-                            const r = imgData[idx], g = imgData[idx+1], b = imgData[idx+2];
-                            const rR = imgData[(y * gridW + Math.min(gridW-1, x+1))*4];
-                            if (Math.abs(r - rR) > currentThreshold) restrictToGrey = true;
-                        }
-                        matchedColor = findClosestColor(imgData[idx], imgData[idx+1], imgData[idx+2], selectedAlgo, restrictToGrey, h7GravityVal);
+                    if (a < 128) {
+                        [ctx, baseCtx].forEach(context => {
+                            context.fillStyle = '#ffffff';
+                            context.fillRect(axisOffset + x * cellSize, axisOffset + y * cellSize, cellSize, cellSize);
+                            context.strokeStyle = '#eee';
+                            context.strokeRect(axisOffset + x * cellSize, axisOffset + y * cellSize, cellSize, cellSize);
+                        });
+                        continue;
                     }
 
-                    if (!matchedColor) continue;
-                    if (!beadCounts[matchedColor.code]) beadCounts[matchedColor.code] = { count: 0, hex: matchedColor.hex };
+                    let matchedColor;
+                    const overrideKey = `${y},${x}`;
+
+                    if (userOverrides[overrideKey]) {
+                        matchedColor = paletteData.find(color => color.code === userOverrides[overrideKey]);
+                    }
+
+                    if (!matchedColor) {
+                        const hardCutoffLimit = h7GravityVal * 0.72;
+                        const matchesHardCutoff = (h7GravityVal > 0) && (r < hardCutoffLimit && g < hardCutoffLimit && b < hardCutoffLimit);
+
+                        if ((activeOutlineMode === 'spatial' || activeOutlineMode === 'sobel') && edgeMap[y][x]) {
+                            matchedColor = blackBeadColor;
+                        } else if (activeOutlineMode === 'luminance' && (0.299*r + 0.587*g + 0.114*b) < currentThreshold) {
+                            matchedColor = blackBeadColor;
+                        } else if (matchesHardCutoff) {
+                            matchedColor = blackBeadColor;
+                        } else {
+                            if (r < 35 && g < 35 && b < 35) {
+                                matchedColor = blackBeadColor;
+                            } else {
+                                const maxVal = Math.max(r, g, b);
+                                const minVal = Math.min(r, g, b);
+                                const saturationSpread = maxVal - minVal;
+                                const restrictToGrey = (saturationSpread < 18);
+                                
+                                const leftCode = (x > 0) ? assignedMatrix[y][x - 1] : null;
+                                const topCode = (y > 0) ? assignedMatrix[y - 1][x] : null;
+
+                                matchedColor = findClosestColor(r, g, b, selectedAlgo, restrictToGrey, h7GravityVal, leftCode, topCode);
+                            }
+                        }
+                    }
+                    
+                    assignedMatrix[y][x] = matchedColor.code;
+
+                    if (!beadCounts[matchedColor.code]) {
+                        beadCounts[matchedColor.code] = {
+                            hex: matchedColor.hex,
+                            count: 0
+                        };
+                    }
                     beadCounts[matchedColor.code].count++;
 
-                    const cx = axisOffset + x * cellSize, cy = axisOffset + y * cellSize;
+                    ctx.fillStyle = matchedColor.hex;
+                    ctx.fillRect(axisOffset + x * cellSize, axisOffset + y * cellSize, cellSize, cellSize);
+                    ctx.strokeStyle = '#aaaaaa';
+                    ctx.strokeRect(axisOffset + x * cellSize, axisOffset + y * cellSize, cellSize, cellSize);
 
-                    baseCtx.fillStyle = matchedColor.hex; baseCtx.fillRect(cx, cy, cellSize - 1, cellSize - 1);
-                    ctx.fillStyle = matchedColor.hex; ctx.fillRect(cx, cy, cellSize - 1, cellSize - 1);
                     ctx.fillStyle = getContrastYIQ(matchedColor.rgb.r, matchedColor.rgb.g, matchedColor.rgb.b);
-                    ctx.font = '9px monospace'; ctx.fillText(matchedColor.code, cx + cellSize/2, cy + cellSize/2);
+                    ctx.font = '10px Arial';
+                    ctx.fillText(
+                        matchedColor.code, 
+                        axisOffset + (x * cellSize) + (cellSize / 2), 
+                        axisOffset + (y * cellSize) + (cellSize / 2)
+                    );
 
-                    const fx = x * cellSize + cellSize/2, fy = y * cellSize + cellSize/2;
-                    fusedCtx.beginPath(); fusedCtx.arc(fx, fy, cellSize/2 - 1, 0, 2 * Math.PI);
-                    fusedCtx.fillStyle = matchedColor.hex; fusedCtx.fill();
-                    fusedCtx.beginPath(); fusedCtx.arc(fx, fy, cellSize/6, 0, 2 * Math.PI);
-                    fusedCtx.fillStyle = 'rgba(0,0,0,0.15)'; fusedCtx.fill();
+                    baseCtx.fillStyle = matchedColor.hex;
+                    baseCtx.fillRect(axisOffset + x * cellSize, axisOffset + y * cellSize, cellSize, cellSize);
+                    baseCtx.strokeStyle = '#aaaaaa';
+                    baseCtx.strokeRect(axisOffset + x * cellSize, axisOffset + y * cellSize, cellSize, cellSize);
+
+                    const beadCornerRadius = cellSize * 0.22;
+
+                    drawRoundedSquare(
+                        fusedCtx,
+                        x * cellSize, y * cellSize,
+                        cellSize, beadCornerRadius
+                    );
+                    fusedCtx.fillStyle = matchedColor.hex;
+                    fusedCtx.fill();
                 }
             }
+
+            [ctx, baseCtx].forEach(context => {
+                context.lineWidth = 2;
+                context.strokeStyle = '#000000';
+                context.beginPath();
+                
+                for (let x = 5; x <= gridW; x += 5) {
+                    const xPos = axisOffset + (x * cellSize);
+                    context.moveTo(xPos, axisOffset);
+                    context.lineTo(xPos, axisOffset + (gridH * cellSize));
+                }
+                
+                for (let y = 5; y <= gridH; y += 5) {
+                    const yPos = axisOffset + (y * cellSize);
+                    context.moveTo(axisOffset, yPos);
+                    context.lineTo(axisOffset + (gridW * cellSize), yPos);
+                }
+                
+                context.stroke();
+                context.lineWidth = 1; 
+            });
+
             generateBeadTable(beadCounts);
+            downloadBtn.disabled = false;
+            if (savePhotosBtn) savePhotosBtn.disabled = false;
         }
 
-        /* --- PIXEL CANVAS OVERRIDE INTERACTION EDITOR --- */
-        function handleCanvasInteraction(e, canvasEl) {
+        function handleGridPointerEvent(canvas, clientX, clientY, forceRevert = false) {
             if (!croppedImageData) return;
-            const rect = canvasEl.getBoundingClientRect();
-            const canvasX = (e.clientX - rect.left) * (canvasEl.width / rect.width);
-            const canvasY = (e.clientY - rect.top) * (canvasEl.height / rect.height);
-            const cellSize = 24, axisOffset = (canvasEl === fusedCanvas) ? 0 : 30;
-            const gridX = Math.floor((canvasX - axisOffset) / cellSize);
-            const gridY = Math.floor((canvasY - axisOffset) / cellSize);
 
-            if (gridX >= 0 && gridX < parseInt(gridWidthInput.value) && gridY >= 0 && gridY < parseInt(gridHeightInput.value)) {
-                const cellKey = `${gridX},${gridY}`;
-                if (e.buttons === 2 || e.button === 2) { delete userOverrides[cellKey]; }
-                else {
-                    if (editorToolSelect.value === 'paint') userOverrides[cellKey] = activeBrushColor;
-                    else delete userOverrides[cellKey];
+            const gridW = parseInt(gridWidthInput.value);
+            const gridH = parseInt(gridHeightInput.value);
+            const cellSize = 24;
+            const axisOffset = (canvas === fusedCanvas) ? 0 : 30;
+
+            const rect = canvas.getBoundingClientRect();
+            const canvasX = (clientX - rect.left) * (canvas.width / rect.width);
+            const canvasY = (clientY - rect.top) * (canvas.height / rect.height);
+
+            const x = Math.floor((canvasX - axisOffset) / cellSize);
+            const y = Math.floor((canvasY - axisOffset) / cellSize);
+
+            if (x >= 0 && x < gridW && y >= 0 && y < gridH) {
+                const key = `${y},${x}`;
+                const isRevertMode = forceRevert || (editorToolSelect.value === 'revert');
+
+                if (isRevertMode) {
+                    if (userOverrides[key]) {
+                        delete userOverrides[key];
+                        generatePattern();
+                    }
+                } else {
+                    if (userOverrides[key] !== activeBrushColor) {
+                        userOverrides[key] = activeBrushColor;
+                        generatePattern();
+                    }
                 }
-                generatePattern();
             }
         }
 
         [baseCanvas, outputCanvas, fusedCanvas].forEach(canvas => {
-            canvas.addEventListener('mousedown', (e) => { if (e.button === 2) e.preventDefault(); isDrawing = true; handleCanvasInteraction(e, canvas); });
-            canvas.addEventListener('mousemove', (e) => { if (isDrawing) handleCanvasInteraction(e, canvas); });
-            canvas.addEventListener('contextmenu', (e) => e.preventDefault());
-        });
-        window.addEventListener('mouseup', () => isDrawing = false);
+            canvas.addEventListener('mousedown', (e) => {
+                if (e.button === 0) { 
+                    isDrawing = true;
+                    handleGridPointerEvent(canvas, e.clientX, e.clientY);
+                } else if (e.button === 2) { 
+                    handleGridPointerEvent(canvas, e.clientX, e.clientY, true);
+                }
+            });
 
-        // Control Panel Changes
-        [gridWidthInput, gridHeightInput, processingModeSelect, paletteSelectInput, colorAlgoSelect].forEach(el => el.addEventListener('change', generatePattern));
-        outlineModeSelect.addEventListener('change', () => {
-            outlineThresholdInput.disabled = outlineModeSelect.value === 'none';
-            thresholdLabel.innerText = `Sensitivity (${outlineModeSelect.value === 'none' ? 'N/A' : outlineThresholdInput.value})`;
+            canvas.addEventListener('mousemove', (e) => {
+                if (isDrawing) {
+                    handleGridPointerEvent(canvas, e.clientX, e.clientY);
+                }
+            });
+
+            canvas.addEventListener('contextmenu', (e) => {
+                e.preventDefault(); 
+            });
+
+            canvas.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 1) {
+                    isDrawing = true;
+                    handleGridPointerEvent(canvas, e.touches[0].clientX, e.touches[0].clientY);
+                    e.preventDefault();
+                }
+            }, { passive: false });
+
+            canvas.addEventListener('touchmove', (e) => {
+                if (isDrawing && e.touches.length === 1) {
+                    handleGridPointerEvent(canvas, e.touches[0].clientX, e.touches[0].clientY);
+                    e.preventDefault();
+                }
+            }, { passive: false });
+        });
+
+        window.addEventListener('mouseup', () => { isDrawing = false; });
+        window.addEventListener('touchend', () => { isDrawing = false; });
+
+        paletteSelectInput.addEventListener('change', () => {
+            initPaletteData();
             generatePattern();
         });
-        outlineThresholdInput.addEventListener('input', () => { thresholdLabel.innerText = `Sensitivity (${outlineThresholdInput.value})`; generatePattern(); });
-        h7GravityInput.addEventListener('input', () => { gravityLabel.innerText = `H7 Edge Snap / Gravity (${h7GravityInput.value})`; generatePattern(); });
-        paletteSelectInput.addEventListener('change', initPaletteData);
 
-        document.querySelectorAll('.theme-swatch').forEach(sw => {
-            sw.addEventListener('click', () => {
-                document.querySelectorAll('.theme-swatch').forEach(s => s.classList.remove('active'));
-                sw.classList.add('active'); document.body.setAttribute('data-theme', sw.getAttribute('data-theme'));
-            });
+        outlineModeSelect.addEventListener('change', () => {
+            const mode = outlineModeSelect.value;
+            if (mode === 'none' || mode === 'spatial') {
+                outlineThresholdInput.disabled = true;
+                thresholdLabel.innerText = "Sensitivity (N/A)";
+            } else if (mode === 'sobel') {
+                outlineThresholdInput.disabled = false;
+                outlineThresholdInput.min = "10";
+                outlineThresholdInput.max = "200";
+                outlineThresholdInput.value = "50";
+                thresholdLabel.innerText = `Edge Cutoff (${outlineThresholdInput.value})`;
+            } else if (mode === 'luminance') {
+                outlineThresholdInput.disabled = false;
+                outlineThresholdInput.min = "0";
+                outlineThresholdInput.max = "255";
+                outlineThresholdInput.value = "60";
+                thresholdLabel.innerText = `Darkness Bias (${outlineThresholdInput.value})`;
+            }
+            generatePattern();
         });
 
-        // --- UNIFIED BULLETPROOF EXPORT ENGINE FOR IOS & DESKTOP ---
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
-                      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        outlineThresholdInput.addEventListener('input', (e) => {
+            const mode = outlineModeSelect.value;
+            if (mode === 'sobel') {
+                thresholdLabel.innerText = `Edge Cutoff (${e.target.value})`;
+            } else if (mode === 'luminance') {
+                thresholdLabel.innerText = `Darkness Bias (${e.target.value})`;
+            }
+            generatePattern();
+        });
 
-        function getActiveCanvas() {
-            const format = document.getElementById('dlType').value;
-            if (format === 'base') return { canvas: baseCanvas, label: 'Base Grid' };
-            if (format === 'fused') return { canvas: fusedCanvas, label: 'Fused Simulation' };
-            return { canvas: outputCanvas, label: 'Blueprint Guide' };
+        h7GravityInput.addEventListener('input', (e) => {
+            gravityLabel.innerText = `H7 Edge Snap / Gravity (${e.target.value})`;
+            generatePattern();
+        });
+
+        scalePercentInput.addEventListener('input', (e) => {
+            const scale = parseFloat(e.target.value) / 100;
+            if (scale > 0 && croppedImageData) {
+                gridWidthInput.value = Math.max(5, Math.round(initialBaseW * scale));
+                gridHeightInput.value = Math.max(5, Math.round(initialBaseH * scale));
+                userOverrides = {}; 
+                generatePattern();
+            }
+        });
+
+        gridWidthInput.addEventListener('input', () => {
+            userOverrides = {};
+            generatePattern();
+        });
+        gridHeightInput.addEventListener('input', () => {
+            userOverrides = {};
+            generatePattern();
+        });
+        processingModeSelect.addEventListener('change', generatePattern);
+        colorAlgoSelect.addEventListener('change', generatePattern);
+
+        imageUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const thumbImg = document.getElementById('thumbPreview');
+                thumbImg.src = event.target.result;
+                document.getElementById('thumbPreviewContainer').style.display = 'block';
+
+                const img = new Image();
+                img.onload = () => {
+                    const tempCanvas = document.createElement('canvas');
+                    tempCanvas.width = img.width;
+                    tempCanvas.height = img.height;
+                    const tempCtx = tempCanvas.getContext('2d');
+                    tempCtx.drawImage(img, 0, 0);
+                    
+                    const imgData = tempCtx.getImageData(0, 0, img.width, img.height);
+                    const data = imgData.data;
+                    
+                    let minX = 0, minY = 0, maxX = img.width - 1, maxY = img.height - 1;
+                    
+                    if (autoCropInput.checked) {
+                        minX = img.width; minY = img.height; maxX = 0; maxY = 0;
+                        for (let y = 0; y < img.height; y++) {
+                            for (let x = 0; x < img.width; x++) {
+                                const i = (y * img.width + x) * 4;
+                                const r = data[i], g = data[i+1], b = data[i+2], a = data[i+3];
+                                
+                                const isWhite = (r > 240 && g > 240 && b > 240);
+                                if (a > 50 && !isWhite) {
+                                    if (x < minX) minX = x;
+                                    if (x > maxX) maxX = x;
+                                    if (y < minY) minY = y;
+                                    if (y > maxY) maxY = y;
+                                }
+                            }
+                        }
+                        if (maxX < minX || maxY < minY) {
+                            minX = 0; minY = 0; maxX = img.width - 1; maxY = img.height - 1;
+                        }
+                    }
+
+                    const croppedWidth = maxX - minX + 1;
+                    const croppedHeight = maxY - minY + 1;
+
+                    const cropCanvas = document.createElement('canvas');
+                    cropCanvas.width = croppedWidth;
+                    cropCanvas.height = croppedHeight;
+                    const cropCtx = cropCanvas.getContext('2d');
+                    cropCtx.drawImage(img, minX, minY, croppedWidth, croppedHeight, 0, 0, croppedWidth, croppedHeight);
+                    
+                    baseCropCanvas = cropCanvas;
+                    croppedImageData = buildFlippedCanvas(baseCropCanvas, flipHorizontal, flipVertical);
+                    updateThumbPreviewTransform();
+
+                    const maxSize = 50;
+                    let targetW, targetH;
+                    if (croppedWidth > croppedHeight) {
+                        targetW = maxSize;
+                        targetH = Math.max(5, Math.round((croppedHeight / croppedWidth) * maxSize));
+                    } else {
+                        targetH = maxSize;
+                        targetW = Math.max(5, Math.round((croppedWidth / croppedHeight) * maxSize));
+                    }
+
+                    initialBaseW = targetW;
+                    initialBaseH = targetH;
+                    scalePercentInput.value = 100;
+
+                    gridWidthInput.value = targetW;
+                    gridHeightInput.value = targetH;
+                    
+                    userOverrides = {}; 
+                    generatePattern();
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        autoCropInput.addEventListener('change', () => {
+            if (imageUpload.files && imageUpload.files[0]) {
+                const event = new Event('change');
+                imageUpload.dispatchEvent(event);
+            }
+        });
+
+        function generateBeadTable(counts) {
+            const container = document.getElementById('beadTableContainer');
+            const content = document.getElementById('beadTableContent');
+            
+            const sortedCounts = Object.entries(counts).sort((a, b) => b[1].count - a[1].count);
+            
+            if (sortedCounts.length === 0) {
+                container.style.display = 'none';
+                return;
+            }
+
+            let tableHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Color Code</th>
+                            <th>Color Preview</th>
+                            <th>Hex Value</th>
+                            <th>Quantity Required</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            sortedCounts.forEach(([code, data]) => {
+                tableHTML += `
+                    <tr class="interactive-row" onclick="selectBrushFromTable('${code}')">
+                        <td><strong>${code}</strong></td>
+                        <td><span class="color-swatch" style="background-color: ${data.hex}"></span></td>
+                        <td>${data.hex}</td>
+                        <td>${data.count}</td>
+                    </tr>
+                `;
+            });
+            
+            tableHTML += `
+                    </tbody>
+                </table>
+            `;
+            
+            content.innerHTML = tableHTML;
+            container.style.display = 'flex';
         }
 
-        function openIOSSaveModal() {
-            const { canvas } = getActiveCanvas();
-            const format = document.getElementById('dlType').value;
+        function selectBrushFromTable(code) {
+            activeBrushColor = code;
+            updateBrushUI();
+            editorToolSelect.value = 'paint';
+        }
+
+        function drawRoundedSquare(context, x, y, size, radius) {
+            const r = Math.min(radius, size / 2);
+            context.beginPath();
+            context.moveTo(x + r, y);
+            context.lineTo(x + size - r, y);
+            context.arcTo(x + size, y, x + size, y + r, r);
+            context.lineTo(x + size, y + size - r);
+            context.arcTo(x + size, y + size, x + size - r, y + size, r);
+            context.lineTo(x + r, y + size);
+            context.arcTo(x, y + size, x, y + size - r, r);
+            context.lineTo(x, y + r);
+            context.arcTo(x, y, x + r, y, r);
+            context.closePath();
+        }
+
+        function adjustColorBrightness(hex, percent) {
+            let r = parseInt(hex.substring(1, 3), 16);
+            let g = parseInt(hex.substring(3, 5), 16);
+            let b = parseInt(hex.substring(5, 7), 16);
+
+            r = parseInt(r * (100 + percent) / 100);
+            g = parseInt(g * (100 + percent) / 100);
+            b = parseInt(b * (100 + percent) / 100);
+
+            r = (r < 255) ? r : 255;
+            g = (g < 255) ? g : 255;
+            b = (b < 255) ? b : 255;
+
+            const rr = ((r.toString(16).length === 1) ? "0" + r.toString(16) : r.toString(16));
+            const gg = ((g.toString(16).length === 1) ? "0" + g.toString(16) : g.toString(16));
+            const bb = ((b.toString(16).length === 1) ? "0" + b.toString(16) : b.toString(16));
+
+            return "#" + rr + gg + bb;
+        }
+
+        downloadBtn.addEventListener('click', () => {
+            const dlType = document.getElementById('dlType').value;
+            let targetCanvas;
             
-            let overlay = document.getElementById('ios-save-overlay');
-            if (!overlay) {
-                overlay = document.createElement('div');
-                overlay.id = 'ios-save-overlay';
-                overlay.style.cssText = `
-                    position: fixed; inset: 0; background: rgba(10, 14, 22, 0.9); 
-                    z-index: 99999; display: flex; align-items: center; 
-                    justify-content: center; padding: 20px; box-sizing: border-box;
-                `;
-                overlay.innerHTML = `
-                    <div style="background: var(--container-bg, #fff); color: var(--text-color, #1b1f2a); padding: 22px; border-radius: 16px; max-width: 90vw; width: 420px; text-align: center; box-shadow: var(--shadow-lg); display: flex; flex-direction: column; gap: 14px; align-items: center; border: 1px solid var(--border-color);">
-                        <h3 style="margin: 0; font-family: var(--font-heading, sans-serif); font-size: 17px; font-weight:700; color: var(--accent-color);">Save Image Asset</h3>
-                        <p style="margin: 0; font-size: 13px; color: var(--text-muted, #6b7280); line-height: 1.4;">
-                            Apple restricts automated web downloads. <br>
-                            <strong>Press and hold (long-press)</strong> the image below, then tap <strong>"Save to Photos"</strong>.
-                        </p>
-                        <div style="border: 1px solid var(--border-color); border-radius: 8px; overflow: auto; max-height: 45vh; width: 100%; display: flex; justify-content: center; background: #fff; padding: 10px; box-sizing: border-box;">
-                            <img id="ios-exported-img" style="max-width: 100%; height: auto; object-fit: contain; border-radius: 4px;" alt="Perler Asset Preview" />
-                        </div>
-                        <button id="ios-close-overlay" style="background: var(--accent-color, #4f5ff0); color: #fff; border: none; padding: 11px; border-radius: 11px; font-weight: 600; cursor: pointer; width: 100%; font-size: 14px;">Close Preview</button>
-                    </div>
-                `;
-                document.body.appendChild(overlay);
-                
-                document.getElementById('ios-close-overlay').addEventListener('click', () => {
-                    overlay.style.display = 'none';
+            if (dlType === 'blueprint') targetCanvas = outputCanvas;
+            else if (dlType === 'base') targetCanvas = baseCanvas;
+            else if (dlType === 'fused') targetCanvas = fusedCanvas;
+
+            const link = document.createElement('a');
+            link.download = `perler-${dlType}.png`;
+            link.href = targetCanvas.toDataURL ? targetCanvas.toDataURL('image/png') : targetCanvas.toDataURL();
+            link.click();
+        });
+
+        /* --- SAVE TO PHOTOS (iOS / Android share sheet) --- */
+        const savePhotosBtn = document.getElementById('savePhotosBtn');
+
+        async function saveCanvasToPhotos(canvas, filename) {
+            if (!canvas) return;
+            try {
+                const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+                if (!blob) throw new Error('Could not generate image data.');
+
+                if (window.File && navigator.canShare) {
+                    const file = new File([blob], filename, { type: 'image/png' });
+                    if (navigator.canShare({ files: [file] })) {
+                        await navigator.share({ files: [file], title: filename });
+                        return;
+                    }
+                }
+
+                // Fallback for browsers without file-sharing support: open the
+                // image in a new tab so the user can long-press to save it.
+                const url = URL.createObjectURL(blob);
+                const opened = window.open(url, '_blank');
+                if (!opened) {
+                    const link = document.createElement('a');
+                    link.download = filename;
+                    link.href = url;
+                    link.click();
+                }
+                setTimeout(() => URL.revokeObjectURL(url), 60000);
+            } catch (err) {
+                if (err && err.name === 'AbortError') return; // user cancelled the share sheet
+                alert('Could not share the image: ' + (err && err.message ? err.message : 'unknown error'));
+            }
+        }
+
+        if (savePhotosBtn) {
+            savePhotosBtn.addEventListener('click', () => {
+                const dlType = document.getElementById('dlType').value;
+                let targetCanvas;
+                if (dlType === 'blueprint') targetCanvas = outputCanvas;
+                else if (dlType === 'base') targetCanvas = baseCanvas;
+                else if (dlType === 'fused') targetCanvas = fusedCanvas;
+                saveCanvasToPhotos(targetCanvas, `perler-${dlType}.png`);
+            });
+        }
+
+        /* --- THEME PICKER --- */
+        (function initThemePicker() {
+            let currentTheme = 'classic';
+            function applyTheme(name) {
+                currentTheme = name;
+                document.body.setAttribute('data-theme', name);
+                document.querySelectorAll('.theme-swatch').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.theme === name);
                 });
             }
+            document.querySelectorAll('.theme-swatch').forEach(btn => {
+                btn.addEventListener('click', () => applyTheme(btn.dataset.theme));
+            });
+            applyTheme(currentTheme);
+        })();
 
-            const imgEl = document.getElementById('ios-exported-img');
-            imgEl.src = canvas.toDataURL('image/png');
-            overlay.style.display = 'flex';
-        }
+        /* --- MOBILE HAMBURGER / DRAWER SIDEBAR --- */
+        (function initDrawer() {
+            const hamburgerBtn = document.getElementById('hamburgerBtn');
+            const sidebarDrawer = document.getElementById('sidebarDrawer');
+            const drawerOverlay = document.getElementById('drawerOverlay');
+            const drawerCloseBtn = document.getElementById('drawerCloseBtn');
+            if (!hamburgerBtn || !sidebarDrawer || !drawerOverlay) return;
 
-        downloadBtn.addEventListener('click', (e) => {
-            if (isIOS) {
-                e.preventDefault();
-                openIOSSaveModal();
-            } else {
-                const { canvas } = getActiveCanvas();
-                const format = document.getElementById('dlType').value;
-                const a = document.createElement('a');
-                a.download = `perler-pattern-${format}.png`; 
-                a.href = canvas.toDataURL('image/png'); 
-                a.click();
+            function openDrawer() {
+                sidebarDrawer.classList.add('open');
+                drawerOverlay.classList.add('visible');
+                hamburgerBtn.setAttribute('aria-expanded', 'true');
+                document.body.style.overflow = 'hidden';
             }
-        });
+            function closeDrawer() {
+                sidebarDrawer.classList.remove('open');
+                drawerOverlay.classList.remove('visible');
+                hamburgerBtn.setAttribute('aria-expanded', 'false');
+                document.body.style.overflow = '';
+            }
+
+            hamburgerBtn.addEventListener('click', openDrawer);
+            if (drawerCloseBtn) drawerCloseBtn.addEventListener('click', closeDrawer);
+            drawerOverlay.addEventListener('click', closeDrawer);
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') closeDrawer();
+            });
+            window.addEventListener('resize', () => {
+                if (window.innerWidth > 992) closeDrawer();
+            });
+        })();
     </script>
 </body>
 </html>
