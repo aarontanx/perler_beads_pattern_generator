@@ -157,7 +157,36 @@
                     fusedCtx.fillStyle = 'rgba(0,0,0,0.15)'; fusedCtx.fill();
                 }
             }
+
+            /* ---- PHASE 4b: gridline overlay on all three outputs ---- */
+            drawGridOverlay(baseCtx, baseCanvas, gridW, gridH, cellSize, axisOffset);
+            drawGridOverlay(ctx, outputCanvas, gridW, gridH, cellSize, axisOffset);
+            drawGridOverlay(fusedCtx, fusedCanvas, gridW, gridH, cellSize, 0);
+
             generateBeadTable(beadCounts);
+        }
+
+        /* --- GRIDLINE OVERLAY ---
+           Thin light lines on every cell boundary; dark, thicker lines every
+           5 cells (aligned with the numbered axis labels) plus the outer
+           border, so 5-blocks are countable at a glance while beading. */
+        function drawGridOverlay(gctx, cv, gridW, gridH, cellSize, offset) {
+            const gw = gridW * cellSize, gh = gridH * cellSize;
+            gctx.save();
+            gctx.strokeStyle = 'rgba(15, 23, 42, 0.16)';
+            gctx.lineWidth = 1;
+            gctx.beginPath();
+            for (let x = 1; x < gridW; x++) { const px = offset + x * cellSize + 0.5; gctx.moveTo(px, offset); gctx.lineTo(px, offset + gh); }
+            for (let y = 1; y < gridH; y++) { const py = offset + y * cellSize + 0.5; gctx.moveTo(offset, py); gctx.lineTo(offset + gw, py); }
+            gctx.stroke();
+            gctx.strokeStyle = 'rgba(15, 23, 42, 0.85)';
+            gctx.lineWidth = 2;
+            gctx.beginPath();
+            for (let x = 5; x < gridW; x += 5) { const px = offset + x * cellSize + 0.5; gctx.moveTo(px, offset); gctx.lineTo(px, offset + gh); }
+            for (let y = 5; y < gridH; y += 5) { const py = offset + y * cellSize + 0.5; gctx.moveTo(offset, py); gctx.lineTo(offset + gw, py); }
+            gctx.stroke();
+            gctx.strokeRect(offset + 1, offset + 1, gw - 2, gh - 2);
+            gctx.restore();
         }
 
         /* --- PIXEL CANVAS OVERRIDE INTERACTION EDITOR --- */
