@@ -1,0 +1,130 @@
+        /* Dashboard Core Layout */
+        .dashboard-layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
+            align-items: start;
+        }
+
+        .resizer {
+            display: none;
+        }
+
+        /* Desktop Viewport Setup */
+        @media (min-width: 993px) {
+            body {
+                height: 100vh;
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+                padding: 15px 20px;
+            }
+            .header-container {
+                margin-bottom: 15px;
+                flex-shrink: 0;
+            }
+            .dashboard-layout {
+                flex-grow: 1;
+                height: calc(100vh - 95px);
+                grid-template-columns: 360px 8px 1fr;
+                gap: 0;
+                overflow: hidden;
+                align-items: stretch;
+            }
+            .resizer {
+                display: block;
+                width: 8px;
+                cursor: col-resize;
+                background-color: transparent;
+                align-self: stretch;
+                position: relative;
+                z-index: 10;
+                transition: background-color 0.2s;
+            }
+            .resizer:hover, .resizer.dragging {
+                background-color: var(--border-color);
+            }
+            .resizer::after {
+                content: '';
+                position: absolute;
+                left: 3px;
+                top: 0;
+                bottom: 0;
+                width: 2px;
+                background-color: var(--border-color);
+                transition: background-color 0.2s;
+            }
+            .resizer:hover::after, .resizer.dragging::after {
+                background-color: var(--accent-color);
+            }
+            .sidebar {
+                height: 100%;
+                overflow-y: auto;
+                padding-right: 12px;
+                box-sizing: border-box;
+            }
+            .main-panel {
+                height: 100%;
+                overflow-y: auto;
+                padding-left: 12px;
+                padding-right: 8px;
+                box-sizing: border-box;
+            }
+            .hamburger-btn { display: none !important; }
+            .drawer-overlay { display: none !important; }
+            .sidebar { position: static !important; transform: none !important; width: auto !important; box-shadow: none !important; }
+        }
+
+        @media (max-width: 992px) {
+            .dashboard-layout {
+                grid-template-columns: 1fr;
+            }
+            .header-container {
+                padding-left: 54px;
+            }
+            .hamburger-btn { 
+                display: flex; 
+                position: fixed;
+                top: 16px;
+                left: 16px;
+                z-index: 1000;
+                box-shadow: var(--card-shadow);
+            }
+            .drawer-overlay { display: block; }
+            .drawer-head { display: flex; }
+            .sidebar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: min(86vw, 340px);
+                height: 100dvh;
+                z-index: 1050;
+                background: var(--container-bg);
+                box-shadow: var(--shadow-lg);
+                padding: 16px;
+                overflow-y: auto;
+                border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+                transform: translateX(-105%);
+                transition: transform 0.28s ease;
+            }
+            .sidebar.open { transform: translateX(0); }
+        }
+
+        /* Sidebar Panels */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .control-card {
+            background-color: var(--container-bg);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            padding: 18px;
+            box-shadow: var(--card-shadow);
+        }
+

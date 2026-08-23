@@ -1,0 +1,77 @@
+{
+ "a": {
+  "paletteLen": 144,
+  "dims": [
+   750,
+   462
+  ],
+  "hashes": {
+   "base": "963e8f9a",
+   "bp": "efea0394",
+   "fused": "1d7e36b2"
+  },
+  "tableRows": [
+   "F5|#E7002F|120",
+   "C8|#0F54C0|90",
+   "A8|#FFDA45|90",
+   "D20|#9C32B2|90",
+   "H7|#000000|27",
+   "B12|#166F41|27",
+   "B17|#9BB13A|20",
+   "B15|#2E5132|18",
+   "B8|#1C9C4F|18",
+   "D3|#2F54AF|10",
+   "C16|#1557A8|10",
+   "C7|#3677D2|10",
+   "G5|#EDB045|10"
+  ],
+  "brush": [
+   "H7",
+   "#000000"
+  ],
+  "theme": "midnight",
+  "bodyBg": "rgb(22, 25, 31)",
+  "cardRadius": "16px",
+  "h1Color": "rgb(91, 195, 254)",
+  "thumbTransform": "scale(1, 1)",
+  "quantGroupVisible": true
+ },
+ "b": {
+  "paletteLen": 144,
+  "dims": [
+   750,
+   462
+  ],
+  "hashes": {
+   "base": "963e8f9a",
+   "bp": "efea0394",
+   "fused": "1d7e36b2"
+  },
+  "tableRows": [
+   "F5|#E7002F|120",
+   "C8|#0F54C0|90",
+   "A8|#FFDA45|90",
+   "D20|#9C32B2|90",
+   "H7|#000000|27",
+   "B12|#166F41|27",
+   "B17|#9BB13A|20",
+   "B15|#2E5132|18",
+   "B8|#1C9C4F|18",
+   "D3|#2F54AF|10",
+   "C16|#1557A8|10",
+   "C7|#3677D2|10",
+   "G5|#EDB045|10"
+  ],
+  "brush": [
+   "H7",
+   "#000000"
+  ],
+  "theme": "midnight",
+  "bodyBg": "rgb(22, 25, 31)",
+  "cardRadius": "16px",
+  "h1Color": "rgb(91, 195, 254)",
+  "thumbTransform": "scale(1, 1)",
+  "quantGroupVisible": true
+ },
+ "match": true
+}

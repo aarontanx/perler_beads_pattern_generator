@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>RUNNING</title></head>
+<body style="margin:0">
+<pre id="out">PENDING</pre>
+<iframe id="f1" src="../original/index.html" style="width:1380px;height:880px;border:0"></iframe>
+<iframe id="f2" src="../index.html" style="width:1380px;height:880px;border:0"></iframe>
+<script>
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+async function until(fn, tries=150, ms=100){ for(let i=0;i<tries;i++){ try{ const v = fn(); if(v) return v; }catch(e){} await sleep(ms); } throw new Error('timeout'); }
+function fnv(cv){ const d=cv.getContext('2d').getImageData(0,0,cv.width,cv.height).data; let h=2166136261>>>0;
+  for(let i=0;i<d.length;i++){ h^=d[i]; h=Math.imul(h,16777619)>>>0; } return ('0000000'+h.toString(16)).slice(-8); }
+async function drive(fr){
+  await until(()=> fr.contentDocument && fr.contentWindow.generatePattern &&
+               fr.contentDocument.readyState==='complete' && fr.contentDocument.getElementById('paletteSelect'));
+  const W = () => fr.contentWindow, D = () => fr.contentDocument, d = D(), w = W();
+  const resp = await w.fetch('/verify/test_input.png');
+  const blob = await resp.blob();
+  const dt = new w.DataTransfer();
+  dt.items.add(new w.File([blob],'test_input.png',{type:'image/png'}));
+  const inp = d.getElementById('imageUpload'); inp.files = dt.files;
+  inp.dispatchEvent(new w.Event('change',{bubbles:true}));
+  await until(()=> D().getElementById('thumbPreviewContainer').style.display !== 'none');
+  const chg = (id,val)=>{ const el=D().getElementById(id); el.value=val; el.dispatchEvent(new (W()).Event('change',{bubbles:true})); };
+  chg('processingMode','photo');
+  chg('colorAlgo','ciede2000');
+  chg('outlineMode','spatial');
+  await sleep(400);
+  const c = D().getElementById('baseCanvas'), r = c.getBoundingClientRect();
+  c.dispatchEvent(new (W()).MouseEvent('mousedown',{clientX:r.left+30+10*24+12, clientY:r.top+30+10*24+12, button:0, buttons:1}));
+  await sleep(400);
+  [...D().querySelectorAll('.theme-swatch')].find(s=>s.dataset.theme==='midnight').click();
+  await sleep(200);
+  const rows=[...D().querySelectorAll('#beadTableContent tbody tr')].map(tr=>[...tr.cells].map(td=>td.innerText.trim()).join('|'));
+  return {
+    paletteLen: Number(W().eval('String(paletteData.length)')),
+    dims:[c.width,c.height],
+    hashes:{base:fnv(D().getElementById('baseCanvas')), bp:fnv(D().getElementById('outputCanvas')), fused:fnv(D().getElementById('fusedCanvas'))},
+    tableRows: rows,
+    brush: [D().getElementById('brushCode').innerText, D().getElementById('brushHex').innerText],
+    theme: D().body.getAttribute('data-theme'),
+    bodyBg: getComputedStyle(D().body).backgroundColor,
+    cardRadius: getComputedStyle(D().querySelector('.control-card')).borderRadius,
+    h1Color: getComputedStyle(D().querySelector('h1')).color,
+    thumbTransform: D().getElementById('thumbPreview').style.transform || '(none)',
+    quantGroupVisible: D().getElementById('quantizeCountGroup').style.display !== 'none'
+  };
+}
+(async ()=>{
+  try{
+    const a = await drive(document.getElementById('f1'));
+    const b = await drive(document.getElementById('f2'));
+    const res = {a, b, match: JSON.stringify(a)===JSON.stringify(b)};
+    document.getElementById('out').textContent = 'DONE ' + JSON.stringify(res, null, 1);
+    document.title = 'PARITY_DONE';
+  }catch(e){
+    document.getElementById('out').textContent = 'ERROR ' + (e && e.stack || e);
+    document.title = 'PARITY_ERROR';
+  }
+})();
+</script></body></html>
