@@ -1,219 +1,185 @@
-        function generatePattern() {
-            if (!croppedImageData) return;
+// Core pattern pipeline: sample → classify → cluster → merge → despeckle → render.
+// computeGrid() is separated from painting so the optimizer can score candidate
+// configs cheaply without touching canvases.
 
-            const gridW = parseInt(gridWidthInput.value);
-            const gridH = parseInt(gridHeightInput.value);
-            const selectedAlgo = colorAlgoSelect.value;
-            const activeOutlineMode = outlineModeSelect.value;
-            const currentThreshold = parseFloat(outlineThresholdInput.value);
-            const h7GravityVal = parseFloat(h7GravityInput.value);
-            const isPixelMode = processingModeSelect.value === 'pixel';
+const CELL_SIZE = 24, AXIS_OFFSET = 30;
 
-            const cellSize = 24, axisOffset = 30;
+function getPipelineOptions() {
+    return {
+        algorithm: colorAlgoSelect.value,
+        smartQuantize: smartQuantizeInput.checked,
+        quantizeK: parseInt(quantizeColorCountInput.value),
+        despeckle: despeckleInput.checked,
+        mergeColors: mergeColorsInput.checked,
+        h7Outline: h7OutlineInput.checked,
+        outlineStrength: parseFloat(outlineStrengthInput.value),
+        isPixelMode: processingModeSelect.value === 'pixel'
+    };
+}
 
-            outputCanvas.width = (gridW * cellSize) + axisOffset; outputCanvas.height = (gridH * cellSize) + axisOffset;
-            baseCanvas.width = (gridW * cellSize) + axisOffset; baseCanvas.height = (gridH * cellSize) + axisOffset;
-            fusedCanvas.width = gridW * cellSize; fusedCanvas.height = gridH * cellSize;
+/* Returns { grid, beadCounts } — grid = array of palette colors (or null). */
+function computeGrid(imgData, gridW, gridH, opts) {
+    const cellCount = gridW * gridH;
+    const matchedGrid = new Array(cellCount).fill(null);
+    const lockedGrid = new Array(cellCount).fill(false);
+    const quantizeQueue = [];
 
-            const imgData = sampleGridCells(croppedImageData, gridW, gridH, isPixelMode);
+    for (let y = 0; y < gridH; y++) {
+        for (let x = 0; x < gridW; x++) {
+            const i = y * gridW + x;
+            const idx = i * 4;
+            if (imgData[idx + 3] < 30) continue;
 
-            baseCtx.fillStyle = '#FFFFFF'; baseCtx.fillRect(0, 0, baseCanvas.width, baseCanvas.height);
-            ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0, 0, outputCanvas.width, outputCanvas.height);
-            fusedCtx.fillStyle = '#E2E6EF'; fusedCtx.fillRect(0, 0, fusedCanvas.width, fusedCanvas.height);
-
-            baseCtx.fillStyle = ctx.fillStyle = '#6B7280';
-            baseCtx.font = ctx.font = '10px sans-serif';
-            baseCtx.textAlign = ctx.textAlign = 'center';
-            baseCtx.textBaseline = ctx.textBaseline = 'middle';
-
-            for (let x = 0; x < gridW; x++) { if (x % 5 === 0 || x === gridW - 1) { ctx.fillText(x + 1, axisOffset + x * cellSize + cellSize / 2, 15); baseCtx.fillText(x + 1, axisOffset + x * cellSize + cellSize / 2, 15); } }
-            for (let y = 0; y < gridH; y++) { if (y % 5 === 0 || y === gridH - 1) { ctx.fillText(y + 1, 15, axisOffset + y * cellSize + cellSize / 2); baseCtx.fillText(y + 1, 15, axisOffset + y * cellSize + cellSize / 2); } }
-
-            const beadCounts = {};
-            const smartQuantizeEnabled = smartQuantizeInput.checked;
-            const despeckleEnabled = despeckleInput.checked;
-            const quantizeK = parseInt(quantizeColorCountInput.value);
-
-            /* ---- PHASE 1: classify every cell, deciding which ones are eligible
-               for clustering vs. which are locked (transparent / overridden /
-               protected black border / forced-grey outline pixels) ---- */
-            const cellCount = gridW * gridH;
-            const matchedGrid = new Array(cellCount).fill(null);
-            const lockedGrid = new Array(cellCount).fill(false);
-            const quantizeQueue = []; // { i, r, g, b, l, a, bb }
-
-            for (let y = 0; y < gridH; y++) {
-                for (let x = 0; x < gridW; x++) {
-                    const i = y * gridW + x;
-                    const idx = i * 4;
-                    if (imgData[idx+3] < 30) continue; // transparent, skip entirely
-
-                    const cellKey = `${x},${y}`;
-                    if (userOverrides[cellKey]) {
-                        matchedGrid[i] = paletteData.find(c => c.code === userOverrides[cellKey]) || null;
-                        lockedGrid[i] = true;
-                        continue;
-                    }
-
-                    const r = imgData[idx], g = imgData[idx+1], b = imgData[idx+2];
-
-                    let restrictToGrey = false;
-                    if (activeOutlineMode === 'luminance' && ((r+g+b)/3) < currentThreshold) restrictToGrey = true;
-                    if (activeOutlineMode === 'sobel') {
-                        const rR = imgData[(y * gridW + Math.min(gridW-1, x+1))*4];
-                        if (Math.abs(r - rR) > currentThreshold) restrictToGrey = true;
-                    }
-
-                    const protectedBlack = isProtectedBlack(r, g, b);
-
-                    if (protectedBlack || restrictToGrey) {
-                        // Border/outline pixels always match directly, per-pixel, restricted
-                        // to neutrals. Never clustered, never despeckled away.
-                        matchedGrid[i] = findClosestColor(r, g, b, selectedAlgo, true, h7GravityVal);
-                        lockedGrid[i] = true;
-                    } else if (smartQuantizeEnabled) {
-                        quantizeQueue.push({ i, r, g, b, lab: rgbToLab(r, g, b) });
-                    } else {
-                        matchedGrid[i] = findClosestColor(r, g, b, selectedAlgo, false, h7GravityVal);
-                    }
-                }
+            const cellKey = `${x},${y}`;
+            if (userOverrides[cellKey]) {
+                matchedGrid[i] = paletteData.find(c => c.code === userOverrides[cellKey]) || null;
+                lockedGrid[i] = true;
+                continue;
             }
 
-            /* ---- PHASE 2: cluster the eligible pixels and map each cluster to
-               its nearest bead color once, instead of per-pixel ---- */
-            if (smartQuantizeEnabled && quantizeQueue.length > 0) {
-                // If the source already has few distinct colors (e.g. clean pixel art
-                // that's already flat), clustering can only hurt - it risks merging two
-                // genuinely different colors into one blended average. In that case, skip
-                // clustering and match each distinct color directly instead.
-                const uniqueColorMap = new Map();
-                quantizeQueue.forEach(p => {
-                    const key = ((p.r >> 2) << 12) | ((p.g >> 2) << 6) | (p.b >> 2);
-                    if (!uniqueColorMap.has(key)) uniqueColorMap.set(key, { r: p.r, g: p.g, b: p.b });
-                });
+            const r = imgData[idx], g = imgData[idx + 1], b = imgData[idx + 2];
+            // Dark pixels are outline candidates under H7 snap mode
+            const restrictToGrey = opts.h7Outline && isProtectedBlack(r, g, b);
 
-                const clusterColorCache = {};
-                let assignments, effectiveQuantizeK;
-
-                if (uniqueColorMap.size <= quantizeK) {
-                    // Exact path: one "cluster" per distinct color, no averaging/merging.
-                    const keyToClusterIdx = {};
-                    let nextIdx = 0;
-                    uniqueColorMap.forEach((color, key) => { keyToClusterIdx[key] = nextIdx++; });
-                    assignments = quantizeQueue.map(p => {
-                        const key = ((p.r >> 2) << 12) | ((p.g >> 2) << 6) | (p.b >> 2);
-                        return keyToClusterIdx[key];
-                    });
-                    uniqueColorMap.forEach((color, key) => {
-                        clusterColorCache[keyToClusterIdx[key]] = findClosestColor(color.r, color.g, color.b, selectedAlgo, false, h7GravityVal);
-                    });
-                } else {
-                    const result = kMeansLab(quantizeQueue.map(p => p.lab), quantizeK);
-                    assignments = result.assignments;
-                    const clusterSums = {};
-                    assignments.forEach((clusterIdx, qi) => {
-                        const p = quantizeQueue[qi];
-                        if (!clusterSums[clusterIdx]) clusterSums[clusterIdx] = { r: 0, g: 0, b: 0, count: 0 };
-                        const s = clusterSums[clusterIdx];
-                        s.r += p.r; s.g += p.g; s.b += p.b; s.count++;
-                    });
-                    Object.keys(clusterSums).forEach(clusterIdx => {
-                        const s = clusterSums[clusterIdx];
-                        const avgR = s.r / s.count, avgG = s.g / s.count, avgB = s.b / s.count;
-                        clusterColorCache[clusterIdx] = findClosestColor(avgR, avgG, avgB, selectedAlgo, false, h7GravityVal);
-                    });
-                }
-
-                assignments.forEach((clusterIdx, qi) => {
-                    matchedGrid[quantizeQueue[qi].i] = clusterColorCache[clusterIdx];
-                });
-            }
-
-            /* ---- PHASE 3: despeckle - clean up isolated stray pixels, never
-               touching locked (border/override/outline) cells ---- */
-            const finalGrid = despeckleEnabled ? despeckleGrid(matchedGrid, gridW, gridH, lockedGrid) : matchedGrid;
-
-            /* ---- PHASE 4: render ---- */
-            for (let y = 0; y < gridH; y++) {
-                for (let x = 0; x < gridW; x++) {
-                    const i = y * gridW + x;
-                    const matchedColor = finalGrid[i];
-                    if (!matchedColor) continue;
-
-                    if (!beadCounts[matchedColor.code]) beadCounts[matchedColor.code] = { count: 0, hex: matchedColor.hex };
-                    beadCounts[matchedColor.code].count++;
-
-                    const cx = axisOffset + x * cellSize, cy = axisOffset + y * cellSize;
-
-                    baseCtx.fillStyle = matchedColor.hex; baseCtx.fillRect(cx, cy, cellSize - 1, cellSize - 1);
-                    ctx.fillStyle = matchedColor.hex; ctx.fillRect(cx, cy, cellSize - 1, cellSize - 1);
-                    ctx.fillStyle = getContrastYIQ(matchedColor.rgb.r, matchedColor.rgb.g, matchedColor.rgb.b);
-                    ctx.font = '9px monospace'; ctx.fillText(matchedColor.code, cx + cellSize/2, cy + cellSize/2);
-
-                    const fx = x * cellSize + cellSize/2, fy = y * cellSize + cellSize/2;
-                    fusedCtx.beginPath(); fusedCtx.arc(fx, fy, cellSize/2 - 1, 0, 2 * Math.PI);
-                    fusedCtx.fillStyle = matchedColor.hex; fusedCtx.fill();
-                    fusedCtx.beginPath(); fusedCtx.arc(fx, fy, cellSize/6, 0, 2 * Math.PI);
-                    fusedCtx.fillStyle = 'rgba(0,0,0,0.15)'; fusedCtx.fill();
-                }
-            }
-
-            /* ---- PHASE 4b: gridline overlay on all three outputs ---- */
-            drawGridOverlay(baseCtx, baseCanvas, gridW, gridH, cellSize, axisOffset);
-            drawGridOverlay(ctx, outputCanvas, gridW, gridH, cellSize, axisOffset);
-            drawGridOverlay(fusedCtx, fusedCanvas, gridW, gridH, cellSize, 0);
-
-            generateBeadTable(beadCounts);
-        }
-
-        /* --- GRIDLINE OVERLAY ---
-           Thin light lines on every cell boundary; dark, thicker lines every
-           5 cells (aligned with the numbered axis labels) plus the outer
-           border, so 5-blocks are countable at a glance while beading. */
-        function drawGridOverlay(gctx, cv, gridW, gridH, cellSize, offset) {
-            const gw = gridW * cellSize, gh = gridH * cellSize;
-            gctx.save();
-            gctx.strokeStyle = 'rgba(15, 23, 42, 0.16)';
-            gctx.lineWidth = 1;
-            gctx.beginPath();
-            for (let x = 1; x < gridW; x++) { const px = offset + x * cellSize + 0.5; gctx.moveTo(px, offset); gctx.lineTo(px, offset + gh); }
-            for (let y = 1; y < gridH; y++) { const py = offset + y * cellSize + 0.5; gctx.moveTo(offset, py); gctx.lineTo(offset + gw, py); }
-            gctx.stroke();
-            gctx.strokeStyle = 'rgba(15, 23, 42, 0.85)';
-            gctx.lineWidth = 2;
-            gctx.beginPath();
-            for (let x = 5; x < gridW; x += 5) { const px = offset + x * cellSize + 0.5; gctx.moveTo(px, offset); gctx.lineTo(px, offset + gh); }
-            for (let y = 5; y < gridH; y += 5) { const py = offset + y * cellSize + 0.5; gctx.moveTo(offset, py); gctx.lineTo(offset + gw, py); }
-            gctx.stroke();
-            gctx.strokeRect(offset + 1, offset + 1, gw - 2, gh - 2);
-            gctx.restore();
-        }
-
-        /* --- PIXEL CANVAS OVERRIDE INTERACTION EDITOR --- */
-        function handleCanvasInteraction(e, canvasEl) {
-            if (!croppedImageData) return;
-            const rect = canvasEl.getBoundingClientRect();
-            const canvasX = (e.clientX - rect.left) * (canvasEl.width / rect.width);
-            const canvasY = (e.clientY - rect.top) * (canvasEl.height / rect.height);
-            const cellSize = 24, axisOffset = (canvasEl === fusedCanvas) ? 0 : 30;
-            const gridX = Math.floor((canvasX - axisOffset) / cellSize);
-            const gridY = Math.floor((canvasY - axisOffset) / cellSize);
-
-            if (gridX >= 0 && gridX < parseInt(gridWidthInput.value) && gridY >= 0 && gridY < parseInt(gridHeightInput.value)) {
-                const cellKey = `${gridX},${gridY}`;
-                if (e.buttons === 2 || e.button === 2) { delete userOverrides[cellKey]; }
-                else {
-                    if (editorToolSelect.value === 'paint') userOverrides[cellKey] = activeBrushColor;
-                    else delete userOverrides[cellKey];
-                }
-                generatePattern();
+            if (restrictToGrey || isProtectedBlack(r, g, b)) {
+                matchedGrid[i] = findClosestColor(r, g, b, opts, true);
+                lockedGrid[i] = true;
+            } else if (opts.smartQuantize) {
+                quantizeQueue.push({ i, r, g, b, lab: rgbToLab(r, g, b) });
+            } else {
+                matchedGrid[i] = findClosestColor(r, g, b, opts, false);
             }
         }
+    }
 
-        [baseCanvas, outputCanvas, fusedCanvas].forEach(canvas => {
-            canvas.addEventListener('mousedown', (e) => { if (e.button === 2) e.preventDefault(); isDrawing = true; handleCanvasInteraction(e, canvas); });
-            canvas.addEventListener('mousemove', (e) => { if (isDrawing) handleCanvasInteraction(e, canvas); });
-            canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+    if (opts.smartQuantize && quantizeQueue.length > 0) {
+        const uniqueColorMap = new Map();
+        quantizeQueue.forEach(p => {
+            const key = ((p.r >> 2) << 12) | ((p.g >> 2) << 6) | (p.b >> 2);
+            if (!uniqueColorMap.has(key)) uniqueColorMap.set(key, { r: p.r, g: p.g, b: p.b });
         });
-        window.addEventListener('mouseup', () => isDrawing = false);
 
+        const clusterColorCache = {};
+        let assignments;
+
+        if (uniqueColorMap.size <= opts.quantizeK) {
+            const keyToClusterIdx = {};
+            let nextIdx = 0;
+            uniqueColorMap.forEach((color, key) => { keyToClusterIdx[key] = nextIdx++; });
+            assignments = quantizeQueue.map(p => keyToClusterIdx[((p.r >> 2) << 12) | ((p.g >> 2) << 6) | (p.b >> 2)]);
+            uniqueColorMap.forEach((color, key) => {
+                clusterColorCache[keyToClusterIdx[key]] = findClosestColor(color.r, color.g, color.b, opts, false);
+            });
+        } else {
+            const result = kMeansLab(quantizeQueue.map(p => p.lab), opts.quantizeK);
+            assignments = result.assignments;
+            const clusterSums = {};
+            assignments.forEach((clusterIdx, qi) => {
+                const p = quantizeQueue[qi];
+                if (!clusterSums[clusterIdx]) clusterSums[clusterIdx] = { r: 0, g: 0, b: 0, count: 0 };
+                const s = clusterSums[clusterIdx];
+                s.r += p.r; s.g += p.g; s.b += p.b; s.count++;
+            });
+            Object.keys(clusterSums).forEach(clusterIdx => {
+                const s = clusterSums[clusterIdx];
+                clusterColorCache[clusterIdx] = findClosestColor(s.r / s.count, s.g / s.count, s.b / s.count, opts, false);
+            });
+        }
+
+        assignments.forEach((clusterIdx, qi) => {
+            matchedGrid[quantizeQueue[qi].i] = clusterColorCache[clusterIdx];
+        });
+    }
+
+    let finalGrid = matchedGrid;
+    if (opts.mergeColors) finalGrid = mergeSimilarColors(finalGrid, 2.0);
+    if (opts.despeckle) finalGrid = despeckleGrid(finalGrid, gridW, gridH, lockedGrid);
+
+    const beadCounts = {};
+    finalGrid.forEach(c => {
+        if (!c) return;
+        if (!beadCounts[c.code]) beadCounts[c.code] = { count: 0, hex: c.hex };
+        beadCounts[c.code].count++;
+    });
+    return { grid: finalGrid, beadCounts };
+}
+
+function drawGridOverlay(gctx, cv, gridW, gridH, cellSize, offset) {
+    const gw = gridW * cellSize, gh = gridH * cellSize;
+    gctx.save();
+    gctx.strokeStyle = 'rgba(15, 23, 42, 0.16)';
+    gctx.lineWidth = 1;
+    gctx.beginPath();
+    for (let x = 1; x < gridW; x++) { const px = offset + x * cellSize + 0.5; gctx.moveTo(px, offset); gctx.lineTo(px, offset + gh); }
+    for (let y = 1; y < gridH; y++) { const py = offset + y * cellSize + 0.5; gctx.moveTo(offset, py); gctx.lineTo(offset + gw, py); }
+    gctx.stroke();
+    // Darker lines every 5 cells + outer border
+    gctx.strokeStyle = 'rgba(15, 23, 42, 0.85)';
+    gctx.lineWidth = 2;
+    gctx.beginPath();
+    for (let x = 5; x < gridW; x += 5) { const px = offset + x * cellSize + 0.5; gctx.moveTo(px, offset); gctx.lineTo(px, offset + gh); }
+    for (let y = 5; y < gridH; y += 5) { const py = offset + y * cellSize + 0.5; gctx.moveTo(offset, py); gctx.lineTo(offset + gw, py); }
+    gctx.stroke();
+    gctx.strokeRect(offset + 1, offset + 1, gw - 2, gh - 2);
+    gctx.restore();
+}
+
+function generatePattern() {
+    if (!croppedImageData) return;
+    generatePattern.lastOpts = null; // invalidate optimizer cache
+
+    const gridW = parseInt(gridWidthInput.value), gridH = parseInt(gridHeightInput.value);
+
+    outputCanvas.width = outputCanvas.height = 0;
+    baseCanvas.width = baseCanvas.height = 0;
+    fusedCanvas.width = fusedCanvas.height = 0;
+    baseCanvas.width = fusedCanvas.width = gridW * CELL_SIZE;
+    baseCanvas.height = fusedCanvas.height = gridH * CELL_SIZE;
+    outputCanvas.width = gridW * CELL_SIZE + AXIS_OFFSET;
+    outputCanvas.height = gridH * CELL_SIZE + AXIS_OFFSET;
+
+    const imgData = sampleGridCells(croppedImageData, gridW, gridH, processingModeSelect.value === 'pixel');
+
+    fusedCtx.fillStyle = '#E2E6EF'; fusedCtx.fillRect(0, 0, fusedCanvas.width, fusedCanvas.height);
+    ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0, 0, outputCanvas.width, outputCanvas.height);
+
+    ctx.fillStyle = '#6B7280';
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    for (let x = 0; x < gridW; x++) { if (x % 5 === 0 || x === gridW - 1) ctx.fillText(x + 1, AXIS_OFFSET + x * CELL_SIZE + CELL_SIZE / 2, 15); }
+    for (let y = 0; y < gridH; y++) { if (y % 5 === 0 || y === gridH - 1) ctx.fillText(y + 1, 15, AXIS_OFFSET + y * CELL_SIZE + CELL_SIZE / 2); }
+
+    const opts = getPipelineOptions();
+    generatePattern.lastOpts = opts;
+    const { grid, beadCounts } = computeGrid(imgData, gridW, gridH, opts);
+    currentBeadCounts = beadCounts;
+
+    for (let y = 0; y < gridH; y++) {
+        for (let x = 0; x < gridW; x++) {
+            const c = grid[y * gridW + x];
+            if (!c) continue;
+            const cx = x * CELL_SIZE, cy = y * CELL_SIZE;
+            baseCtx.fillStyle = c.hex;
+            baseCtx.fillRect(cx, cy, CELL_SIZE - 1, CELL_SIZE - 1);
+
+            const ox = AXIS_OFFSET + cx;
+            ctx.fillStyle = c.hex;
+            ctx.fillRect(ox, cy, CELL_SIZE - 1, CELL_SIZE - 1);
+            ctx.fillStyle = getContrastYIQ(c.rgb.r, c.rgb.g, c.rgb.b);
+            ctx.font = '9px monospace';
+            ctx.fillText(c.code, ox + CELL_SIZE / 2, cy + CELL_SIZE / 2);
+
+            const fx = cx + CELL_SIZE / 2, fy = cy + CELL_SIZE / 2;
+            fusedCtx.beginPath(); fusedCtx.arc(fx, fy, CELL_SIZE / 2 - 1, 0, 2 * Math.PI);
+            fusedCtx.fillStyle = c.hex; fusedCtx.fill();
+            fusedCtx.beginPath(); fusedCtx.arc(fx, fy, CELL_SIZE / 6, 0, 2 * Math.PI);
+            fusedCtx.fillStyle = 'rgba(0,0,0,0.15)'; fusedCtx.fill();
+        }
+    }
+
+    drawGridOverlay(baseCtx, baseCanvas, gridW, gridH, CELL_SIZE, 0);
+    drawGridOverlay(ctx, outputCanvas, gridW, gridH, CELL_SIZE, AXIS_OFFSET);
+    drawGridOverlay(fusedCtx, fusedCanvas, gridW, gridH, CELL_SIZE, 0);
+
+    generateBeadTable(beadCounts);
+}
