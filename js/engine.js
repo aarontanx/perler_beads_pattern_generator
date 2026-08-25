@@ -162,12 +162,12 @@ function generatePattern() {
             baseCtx.fillStyle = c.hex;
             baseCtx.fillRect(cx, cy, CELL_SIZE - 1, CELL_SIZE - 1);
 
-            const ox = AXIS_OFFSET + cx;
+            const ox = AXIS_OFFSET + cx, oy = AXIS_OFFSET + cy;
             ctx.fillStyle = c.hex;
-            ctx.fillRect(ox, cy, CELL_SIZE - 1, CELL_SIZE - 1);
+            ctx.fillRect(ox, oy, CELL_SIZE - 1, CELL_SIZE - 1);
             ctx.fillStyle = getContrastYIQ(c.rgb.r, c.rgb.g, c.rgb.b);
             ctx.font = '9px monospace';
-            ctx.fillText(c.code, ox + CELL_SIZE / 2, cy + CELL_SIZE / 2);
+            ctx.fillText(c.code, ox + CELL_SIZE / 2, oy + CELL_SIZE / 2);
 
             const fx = cx + CELL_SIZE / 2, fy = cy + CELL_SIZE / 2;
             fusedCtx.beginPath(); fusedCtx.arc(fx, fy, CELL_SIZE / 2 - 1, 0, 2 * Math.PI);

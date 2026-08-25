@@ -11,7 +11,8 @@ function cellFromEvent(e, canvasEl) {
     const rect = canvasEl.getBoundingClientRect();
     const canvasX = (e.clientX - rect.left) * (canvasEl.width / rect.width);
     const canvasY = (e.clientY - rect.top) * (canvasEl.height / rect.height);
-    const offset = canvasEl === fusedCanvas ? 0 : 0; // base & fused have no axis margin in this layout
+    // Blueprint canvas carries a 30px numbered-axis margin; base & fused don't
+    const offset = canvasEl === outputCanvas ? AXIS_OFFSET : 0;
     const gridW = parseInt(gridWidthInput.value), gridH = parseInt(gridHeightInput.value);
     const gx = Math.floor((canvasX - offset) / CELL_SIZE);
     const gy = Math.floor((canvasY - offset) / CELL_SIZE);
@@ -72,6 +73,7 @@ function setupPointerEditing(canvasEl) {
     canvasEl.addEventListener('pointercancel', stop);
 }
 setupPointerEditing(baseCanvas);
+setupPointerEditing(outputCanvas);
 setupPointerEditing(fusedCanvas);
 
 // Keyboard editing on the active canvas wrapper
