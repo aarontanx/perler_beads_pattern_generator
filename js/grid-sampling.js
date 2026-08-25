@@ -1,5 +1,9 @@
 /* DESPECKLE — replaces isolated single-pixel outliers when a strong majority
-   (>=75%) of valid neighbors agree. Locked cells are never overwritten. */
+   (>=75%) of valid neighbors agree. Locked cells are never overwritten.
+   Feature protection: only replace when the swap is perceptually small
+   (ΔE2000 < 10). A high-contrast isolated cell (red eyes on a white face,
+   a nose dot) is a deliberate detail, not noise — despeckling must not
+   erase it. */
 function despeckleGrid(matchedGrid, gridW, gridH, lockedGrid) {
     const result = matchedGrid.slice();
     const dirs = [[0, -1], [0, 1], [-1, 0], [1, 0]];
@@ -25,7 +29,9 @@ function despeckleGrid(matchedGrid, gridW, gridH, lockedGrid) {
 
             if (bestCode && bestCount / neighborCodes.length >= 0.75) {
                 const replacement = paletteData.find(c => c.code === bestCode);
-                if (replacement) result[i] = replacement;
+                if (replacement && deltaE2000(matchedGrid[i].lab, replacement.lab) < 10) {
+                    result[i] = replacement;
+                }
             }
         }
     }

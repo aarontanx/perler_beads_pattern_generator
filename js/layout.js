@@ -66,8 +66,10 @@ function applyZoom() {
     document.querySelectorAll('.canvas-scale-wrapper canvas').forEach(cv => {
         const container = cv.closest('.canvas-container');
         const availW = container ? container.clientWidth - 28 : 600;
-        const fitPct = availW / cv.width;
-        const pct = zoomPct === 100 ? Math.min(fitPct, 3) : fitPct * (zoomPct / 100);
+        const availH = Math.max(240, window.innerHeight - 240); // viewport budget (toolbar + headers)
+        // 100% = contain (whole pattern visible); other steps scale around that
+        const contain = Math.min(availW / cv.width, availH / cv.height, 3);
+        const pct = zoomPct === 100 ? contain : contain * (zoomPct / 100);
         cv.style.width = `${Math.max(40, Math.round(cv.width * pct))}px`;
     });
 }

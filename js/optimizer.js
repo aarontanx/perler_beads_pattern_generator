@@ -20,10 +20,11 @@ function qualityLabel(v) {
     return name;
 }
 
-/* Mean ΔE2000 between the candidate grid (upscaled to ref dims) and the
-   baseline reference grid. */
+/* ΔE2000 stats between the candidate grid (upscaled to ref dims) and the
+   baseline reference grid: mean + 90th percentile. The p90 catches localized
+   collapses (e.g. blue jeans merging into grey) that a mean hides. */
 function scoreVsRef(grid, w, h, refGrid, refW, refH) {
-    let sum = 0, n = 0;
+    const des = [];
     for (let ry = 0; ry < refH; ry++) {
         const cy = Math.min(h - 1, Math.floor(ry * h / refH));
         for (let rx = 0; rx < refW; rx++) {
@@ -31,11 +32,14 @@ function scoreVsRef(grid, w, h, refGrid, refW, refH) {
             const c = grid[cy * w + cx];
             const r = refGrid[ry * refW + rx];
             if (!c || !r) continue;
-            sum += deltaE2000(c.lab, r.lab);
-            n++;
+            des.push(deltaE2000(c.lab, r.lab));
         }
     }
-    return n ? sum / n : 0;
+    if (!des.length) return { mean: 0, p90: 0 };
+    des.sort((a, b) => a - b);
+    const mean = des.reduce((a, b) => a + b, 0) / des.length;
+    const p90 = des[Math.min(des.length - 1, Math.floor(des.length * 0.9))];
+    return { mean, p90 };
 }
 
 function runOptimizer() {
@@ -63,9 +67,11 @@ function runOptimizer() {
 
     setTimeout(() => {
         try {
-            // Baseline reference pattern (built once per run)
+            // Baseline reference pattern — built ONCE with merging OFF and a high
+            // color budget, so it represents true full-fidelity output. Candidates
+            // are judged against it; the reference itself never collapses.
             const refSample = sampleGridCells(croppedImageData, baseW, refH, opts.isPixelMode);
-            const ref = computeGrid(refSample, baseW, refH, opts);
+            const ref = computeGrid(refSample, baseW, refH, { ...opts, mergeColors: false, quantizeK: 32 });
 
             let best = null;
             const kCandidates = opts.smartQuantize ? [opts.quantizeK, Math.round(opts.quantizeK * 0.75), Math.round(opts.quantizeK * 0.5), 12, 8].filter(k => k >= 4) : [null];
@@ -79,14 +85,14 @@ function runOptimizer() {
                     if (k !== null) trialOpts.quantizeK = k;
                     const { grid, beadCounts } = computeGrid(imgData, w, h, trialOpts);
 
-                    const de = scoreVsRef(grid, w, h, ref.grid, baseW, refH);
-                    if (de > maxDE) continue; // too lossy for the tolerance
+                    const { mean, p90 } = scoreVsRef(grid, w, h, ref.grid, baseW, refH);
+                    if (mean > maxDE || p90 > maxDE * 2) continue; // mean + localized-loss gate
 
                     const totalBeads = Object.values(beadCounts).reduce((a, b) => a + b.count, 0);
                     const distinctColors = Object.keys(beadCounts).length;
                     // Objective: minimize beads, then colors, then dimensions
                     const cost = totalBeads * (1 + distinctColors / 40) + w * h * 0.05;
-                    if (!best || cost < best.cost) best = { w, h, de, totalBeads, distinctColors, cost, k: trialOpts.quantizeK };
+                    if (!best || cost < best.cost) best = { w, h, mean, p90, totalBeads, distinctColors, cost, k: trialOpts.quantizeK };
                 }
             }
 
@@ -106,7 +112,7 @@ function runOptimizer() {
                 optimizeStats.innerHTML =
                     `<div>Grid: <strong>${best.w}×${best.h}</strong>${oldBeads ? ` <span class="stats-old">${oldBeads.toLocaleString()} beads</span>` : ''} → <strong>${fmt(best.totalBeads)} beads</strong></div>` +
                     `<div>Colors: ${oldColors ? `<span class="stats-old">${oldColors}</span> → ` : ''}<strong>${best.distinctColors}</strong></div>` +
-                    `<div>Deviation from 100% reference: <strong>ΔE ${best.de.toFixed(1)}</strong> (tolerance ≤ ${maxDE.toFixed(1)})</div>`;
+                    `<div>Deviation from 100% reference: <strong>ΔE ${best.mean.toFixed(1)}</strong> mean / ${best.p90.toFixed(1)} worst-10% (tolerance ≤ ${maxDE.toFixed(1)})</div>`;
             } else {
                 optimizeStats.hidden = false;
                 optimizeStats.innerHTML = '<div>No config met the quality target — try lowering the quality slider.</div>';

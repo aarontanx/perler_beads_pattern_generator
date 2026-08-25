@@ -182,4 +182,5 @@ function generatePattern() {
     drawGridOverlay(fusedCtx, fusedCanvas, gridW, gridH, CELL_SIZE, 0);
 
     generateBeadTable(beadCounts);
+    if (typeof applyZoom === 'function') applyZoom(); // re-fit when canvas dimensions change
 }
