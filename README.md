@@ -1,4 +1,4 @@
-# Perler Pattern Studio
+# Perler Beads Pattern Generator
 
 Turn any image into a beadable pixel-grid pattern — then automatically shrink
 it to the smallest bead output that still looks right. Upload an image, hit
