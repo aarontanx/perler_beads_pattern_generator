@@ -13,7 +13,8 @@ function getPipelineOptions() {
         mergeColors: mergeColorsInput.checked,
         h7Outline: h7OutlineInput.checked,
         outlineStrength: parseFloat(outlineStrengthInput.value),
-        isPixelMode: processingModeSelect.value === 'pixel'
+        isPixelMode: processingModeSelect.value === 'pixel',
+        palette: paletteSelectInput.value
     };
 }
 
@@ -92,7 +93,7 @@ function computeGrid(imgData, gridW, gridH, opts) {
     }
 
     let finalGrid = matchedGrid;
-    if (opts.mergeColors) finalGrid = mergeSimilarColors(finalGrid, 2.0);
+    if (opts.mergeColors) finalGrid = mergeSimilarColors(finalGrid, 2.0, lockedGrid);
     if (opts.despeckle) finalGrid = despeckleGrid(finalGrid, gridW, gridH, lockedGrid);
 
     const beadCounts = {};
@@ -124,12 +125,94 @@ function drawGridOverlay(gctx, cv, gridW, gridH, cellSize, offset) {
     gctx.restore();
 }
 
+/* Ruler labels for the Base Grid tab.  The blueprint canvas already has a
+   30px axis strip (AXIS_OFFSET) with numbers.  The base canvas has none, so
+   we paint small coordinate labels directly inside the first row/column of
+   cells — same style as the blueprint axis, but sitting inside the grid. */
+function drawBaseRulers(gctx, gridW, gridH) {
+    gctx.save();
+    gctx.font = '8px sans-serif';
+    gctx.textAlign = 'center';
+    gctx.textBaseline = 'middle';
+    // Column numbers (top edge of each column, inside the cell)
+    for (let x = 0; x < gridW; x++) {
+        if (x % 5 !== 0 && x !== gridW - 1) continue;
+        const px = x * CELL_SIZE + CELL_SIZE / 2;
+        const py = CELL_SIZE / 2;
+        gctx.fillStyle = 'rgba(0,0,0,0.45)';
+        gctx.fillText(x + 1, px + 1, py + 1);
+        gctx.fillStyle = 'rgba(255,255,255,0.85)';
+        gctx.fillText(x + 1, px, py);
+    }
+    // Row numbers (left edge of each row, inside the cell)
+    for (let y = 0; y < gridH; y++) {
+        if (y % 5 !== 0 && y !== gridH - 1) continue;
+        const px = CELL_SIZE / 2;
+        const py = y * CELL_SIZE + CELL_SIZE / 2;
+        gctx.fillStyle = 'rgba(0,0,0,0.45)';
+        gctx.fillText(y + 1, px + 1, py + 1);
+        gctx.fillStyle = 'rgba(255,255,255,0.85)';
+        gctx.fillText(y + 1, px, py);
+    }
+    gctx.restore();
+}
+
 function generatePattern() {
     if (!croppedImageData) return;
-    generatePattern.lastOpts = null; // invalidate optimizer cache
 
     const gridW = parseInt(gridWidthInput.value), gridH = parseInt(gridHeightInput.value);
+    const opts = getPipelineOptions();
 
+    // ── Base-grid cache ──────────────────────────────────────────────────────
+    // The expensive pipeline (k-means, merge, despeckle) runs ONCE per unique
+    // set of settings.  When the user is just painting/erasing cells, the opts
+    // and image haven't changed, so we reuse the cached base grid and only
+    // overlay the user overrides on top.  This keeps the rest of the grid
+    // completely stable while editing.
+    const optsKey = JSON.stringify(opts) + `|${gridW}x${gridH}|owned:` + (typeof ownedColorCodes !== 'undefined' ? [...ownedColorCodes].sort().join(',') : '');
+    const cacheHit = generatePattern._baseGrid &&
+                     generatePattern._optsKey === optsKey;
+
+    let baseGrid;
+    if (cacheHit) {
+        baseGrid = generatePattern._baseGrid;
+    } else {
+        // Full pipeline run — sample image, quantize, merge, despeckle
+        // Run WITHOUT user overrides so the cache represents the pure
+        // algorithmic result; overrides are overlaid separately below.
+        const savedOverrides = userOverrides;
+        userOverrides = {};
+        const imgData = sampleGridCells(croppedImageData, gridW, gridH, opts.isPixelMode);
+        const { grid } = computeGrid(imgData, gridW, gridH, opts);
+        userOverrides = savedOverrides;
+
+        generatePattern._baseGrid = grid;
+        generatePattern._optsKey  = optsKey;
+        baseGrid = grid;
+    }
+
+    // Overlay user overrides on a copy of the base grid
+    const grid = baseGrid.slice();
+    const beadCounts = {};
+    Object.entries(userOverrides).forEach(([cellKey, code]) => {
+        const [x, y] = cellKey.split(',').map(Number);
+        const i = y * gridW + x;
+        if (i >= 0 && i < grid.length) {
+            grid[i] = paletteData.find(c => c.code === code) || grid[i];
+        }
+    });
+
+    grid.forEach(c => {
+        if (!c) return;
+        if (!beadCounts[c.code]) beadCounts[c.code] = { count: 0, hex: c.hex };
+        beadCounts[c.code].count++;
+    });
+
+    currentBeadCounts = beadCounts;
+    window._lastGrid = grid;
+    generatePattern.lastOpts = opts;
+
+    // ── Render ───────────────────────────────────────────────────────────────
     outputCanvas.width = outputCanvas.height = 0;
     baseCanvas.width = baseCanvas.height = 0;
     fusedCanvas.width = fusedCanvas.height = 0;
@@ -137,8 +220,6 @@ function generatePattern() {
     baseCanvas.height = fusedCanvas.height = gridH * CELL_SIZE;
     outputCanvas.width = gridW * CELL_SIZE + AXIS_OFFSET;
     outputCanvas.height = gridH * CELL_SIZE + AXIS_OFFSET;
-
-    const imgData = sampleGridCells(croppedImageData, gridW, gridH, processingModeSelect.value === 'pixel');
 
     fusedCtx.fillStyle = '#E2E6EF'; fusedCtx.fillRect(0, 0, fusedCanvas.width, fusedCanvas.height);
     ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0, 0, outputCanvas.width, outputCanvas.height);
@@ -148,11 +229,6 @@ function generatePattern() {
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     for (let x = 0; x < gridW; x++) { if (x % 5 === 0 || x === gridW - 1) ctx.fillText(x + 1, AXIS_OFFSET + x * CELL_SIZE + CELL_SIZE / 2, 15); }
     for (let y = 0; y < gridH; y++) { if (y % 5 === 0 || y === gridH - 1) ctx.fillText(y + 1, 15, AXIS_OFFSET + y * CELL_SIZE + CELL_SIZE / 2); }
-
-    const opts = getPipelineOptions();
-    generatePattern.lastOpts = opts;
-    const { grid, beadCounts } = computeGrid(imgData, gridW, gridH, opts);
-    currentBeadCounts = beadCounts;
 
     for (let y = 0; y < gridH; y++) {
         for (let x = 0; x < gridW; x++) {
@@ -180,7 +256,19 @@ function generatePattern() {
     drawGridOverlay(baseCtx, baseCanvas, gridW, gridH, CELL_SIZE, 0);
     drawGridOverlay(ctx, outputCanvas, gridW, gridH, CELL_SIZE, AXIS_OFFSET);
     drawGridOverlay(fusedCtx, fusedCanvas, gridW, gridH, CELL_SIZE, 0);
+    drawBaseRulers(baseCtx, gridW, gridH);
 
     generateBeadTable(beadCounts);
-    if (typeof applyZoom === 'function') applyZoom(); // re-fit when canvas dimensions change
+    if (typeof applyZoom === 'function') applyZoom();
+    if (typeof sessionAutoSave === 'function') sessionAutoSave();
+    if (typeof renderCompareSource === 'function' && compareActive) renderCompareSource();
+    if (typeof refreshHighlightIfActive === 'function') refreshHighlightIfActive();
+}
+
+/* Call this whenever you want to force a full pipeline re-run on the next
+   generatePattern() call — e.g. after loading a new image or changing settings
+   that are outside opts (like switching palette data). */
+function invalidateBaseGridCache() {
+    generatePattern._baseGrid = null;
+    generatePattern._optsKey  = null;
 }

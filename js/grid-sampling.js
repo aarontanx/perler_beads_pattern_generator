@@ -41,8 +41,10 @@ function despeckleGrid(matchedGrid, gridW, gridH, lockedGrid) {
 /* MERGE NEAR-IDENTICAL BEAD COLORS — compression pass.
    Among colors actually used in the pattern, if two used swatches sit within
    `threshold` ΔE2000 of each other, the rarer one's cells re-point to the more
-   common one. Cuts distinct bead purchases with no visible quality loss. */
-function mergeSimilarColors(matchedGrid, threshold = 2.0) {
+   common one. Cuts distinct bead purchases with no visible quality loss.
+   lockedGrid (optional) — cells at locked indices are never remapped so that
+   user overrides painted via the pixel editor are always preserved exactly. */
+function mergeSimilarColors(matchedGrid, threshold = 2.0, lockedGrid = null) {
     const usage = new Map(); // code -> count
     matchedGrid.forEach(c => { if (c) usage.set(c.code, (usage.get(c.code) || 0) + 1); });
     const used = paletteData.filter(c => usage.has(c.code));
@@ -60,7 +62,12 @@ function mergeSimilarColors(matchedGrid, threshold = 2.0) {
         remap.set(color.code, target ? target.code : color.code);
         if (!target) survivors.push(color);
     }
-    return matchedGrid.map(c => c ? (paletteData.find(p => p.code === remap.get(c.code)) || c) : null);
+    return matchedGrid.map((c, i) => {
+        // Never remap a locked (user-overridden) cell
+        if (!c) return null;
+        if (lockedGrid && lockedGrid[i]) return c;
+        return paletteData.find(p => p.code === remap.get(c.code)) || c;
+    });
 }
 
 /* ACCURATE GRID SAMPLING — reads every source pixel per cell.

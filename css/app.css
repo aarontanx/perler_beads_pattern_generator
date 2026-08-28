@@ -81,7 +81,7 @@ body::before {
 .logo-mark span:nth-child(3) { background: #4C8BF5; } .logo-mark span:nth-child(4) { background: #57B894; }
 .brand-text h1 { font-family: var(--font-heading); font-size: 18px; font-weight: 800; margin: 0; line-height: 1.15; }
 .brand-tagline { font-size: 11.5px; color: var(--text-muted); margin: 0; }
-.hamburger-btn { display: none; }
+.hamburger-btn { display: inline-flex; }
 .theme-picker { display: flex; gap: 6px; padding: 5px; background: var(--container-bg); border-radius: 999px; box-shadow: var(--card-shadow); border: 1px solid var(--border-color); }
 .theme-swatch {
     width: 26px; height: 26px; border-radius: 50%; cursor: pointer; border: 2px solid transparent;
@@ -93,11 +93,24 @@ body::before {
 .dashboard-layout {
     display: grid; grid-template-columns: 330px 1fr; gap: 14px;
     max-width: 1500px; margin-inline: auto; align-items: start;
+    transition: grid-template-columns 0.25s ease;
+}
+/* Sidebar collapsed — on desktop the sidebar slides off the left edge */
+.dashboard-layout.sidebar-collapsed {
+    grid-template-columns: 0px 1fr;
+}
+.dashboard-layout.sidebar-collapsed .sidebar {
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(-110%);
+    transition: transform 0.25s ease, opacity 0.2s ease;
 }
 .sidebar {
     background: var(--container-bg); border-radius: var(--radius-lg); box-shadow: var(--card-shadow);
     padding: 14px; max-height: calc(100vh - 90px); overflow-y: auto;
     position: sticky; top: 16px; display: flex; flex-direction: column; gap: 12px;
+    transition: transform 0.25s ease, opacity 0.2s ease;
 }
 .main-panel { min-width: 0; display: flex; flex-direction: column; gap: 14px; }
 .drawer-overlay { display: none; }
@@ -224,7 +237,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent-color); height: 32
 .canvas-container.active { display: block; }
 .canvas-header-row h2 { margin: 0 0 10px; font-family: var(--font-heading); font-size: 15px; font-weight: 700; display: flex; align-items: baseline; gap: 7px; }
 .h2-note { font-size: 11px; font-weight: 500; color: var(--text-muted); }
-.canvas-scale-wrapper { overflow: auto; -webkit-overflow-scrolling: touch; max-width: 100%; touch-action: pan-x pan-y pinch-zoom; }
+.canvas-scale-wrapper { overflow: auto; -webkit-overflow-scrolling: touch; max-width: 100%; touch-action: pan-x pan-y pinch-zoom; position: relative; }
 .canvas-scale-wrapper canvas { display: block; image-rendering: pixelated; }
 .cursor-overlay { pointer-events: none; position: absolute; }
 .empty-state {
@@ -274,4 +287,319 @@ input[type="range"] { width: 100%; accent-color: var(--accent-color); height: 32
     }
     .drawer-overlay.visible { opacity: 1; pointer-events: auto; }
     .row-group { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* ================================================================
+   ENHANCEMENTS — Undo/Redo, Session, Owned Colors, Compare, PDF, Toast
+   ================================================================ */
+
+/* Undo / Redo buttons */
+.undo-redo-group {
+    display: flex;
+    gap: 6px;
+    margin: 8px 0 4px;
+}
+.undo-btn {
+    flex: 1;
+    padding: 6px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    background: var(--container-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    color: var(--text-color);
+    cursor: pointer;
+    transition: background 0.15s, opacity 0.15s;
+}
+.undo-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.undo-btn:not(:disabled):hover { background: var(--accent-soft); border-color: var(--accent-color); }
+
+/* Session buttons */
+.session-btn-group {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin: 6px 0;
+}
+.btn-secondary {
+    flex: 1;
+    min-width: 0;
+    padding: 8px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    background: var(--container-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    color: var(--text-color);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    text-align: center;
+}
+.btn-secondary:hover { background: var(--accent-soft); border-color: var(--accent-color); }
+.btn-sm { padding: 5px 10px; font-size: 11px; }
+.section-divider { border: none; border-top: 1px solid var(--border-color); margin: 12px 0 8px; }
+
+/* Owned colors filter */
+.owned-filter-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 8px 0 4px;
+}
+.owned-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 5px;
+    border-radius: 10px;
+    background: var(--accent-color);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+}
+.filter-active { border-color: var(--accent-color) !important; background: var(--accent-soft) !important; }
+.hint-inline { font-size: 11px; color: var(--text-muted); }
+
+/* Owned colors modal */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 14, 22, 0.75);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+.modal-overlay[hidden] { display: none; }
+.modal-box {
+    background: var(--container-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    width: min(680px, 96vw);
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px 10px;
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+.modal-head h3 { margin: 0; font-family: var(--font-heading); font-size: 16px; }
+.modal-actions {
+    display: flex;
+    gap: 8px;
+    padding: 10px 20px 4px;
+    flex-shrink: 0;
+}
+.owned-colors-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(68px, 1fr));
+    gap: 4px;
+    padding: 10px 20px 20px;
+    overflow-y: auto;
+}
+.owned-swatch-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 6px 4px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    border: 1.5px solid transparent;
+    transition: border-color 0.12s, background 0.12s;
+    position: relative;
+}
+.owned-swatch-label:hover { background: var(--accent-soft); border-color: var(--accent-color); }
+.owned-swatch-cb { position: absolute; top: 4px; left: 4px; width: 13px; height: 13px; cursor: pointer; }
+.owned-swatch-cb:checked ~ .owned-swatch-dot { outline: 2.5px solid var(--accent-color); outline-offset: 2px; }
+.owned-swatch-dot {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(0,0,0,0.15);
+    display: block;
+    margin-top: 4px;
+}
+.owned-swatch-code { font-size: 10px; font-family: var(--font-mono); color: var(--text-muted); text-align: center; }
+
+/* Compare panel */
+.canvas-area-wrapper {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    width: 100%;
+}
+.canvas-stage { flex: 1 1 0; min-width: 0; }
+.compare-panel {
+    flex: 0 0 auto;
+    width: 45%;
+    min-width: 200px;
+}
+.compare-panel .canvas-header-row { margin-bottom: 8px; }
+
+/* Toolbar right group */
+.toolbar-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.compare-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    background: var(--container-bg);
+    border: 1.5px solid var(--border-color);
+    color: var(--text-color);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    white-space: nowrap;
+}
+.compare-btn:hover, .compare-btn.active {
+    background: var(--accent-soft);
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+}
+
+/* Toast notifications */
+#toastContainer {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 99999;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    pointer-events: none;
+}
+.toast {
+    padding: 10px 18px;
+    border-radius: var(--radius-md);
+    font-size: 13px;
+    font-weight: 600;
+    box-shadow: var(--shadow-lg);
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    max-width: 320px;
+}
+.toast-visible { opacity: 1; transform: translateY(0); }
+.toast-success { background: var(--success-color); color: #fff; }
+.toast-error   { background: #E53E3E; color: #fff; }
+
+/* PDF export button matches existing btn-accent style, just nudge margin */
+#pdfExportBtn { margin-top: 6px; }
+
+/* ============================================================
+   COLOR REGION HIGHLIGHTING
+   ============================================================ */
+.highlight-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--text-muted);
+    padding: 2px 4px;
+    border-radius: 4px;
+    line-height: 1;
+    transition: color 0.15s, background 0.15s;
+}
+.highlight-btn:hover {
+    color: var(--accent-color);
+    background: var(--accent-soft, rgba(79,95,240,.12));
+}
+.interactive-row.row-highlighted {
+    background: var(--accent-soft, rgba(79,95,240,.15));
+    outline: 2px solid var(--accent-color);
+    outline-offset: -2px;
+}
+.interactive-row.row-highlighted .highlight-btn {
+    color: #FFD600;
+}
+/* The highlight overlay canvas sits on top — pointer-events: none keeps
+   editing fully functional while the highlight is shown. */
+.highlight-overlay {
+    pointer-events: none;
+    z-index: 4;
+}
+
+/* ============================================================
+   BASE GRID RULERS
+   (No extra CSS needed — rulers are painted directly onto the
+   canvas in engine.js.  Keep this comment as a marker.)
+   ============================================================ */
+
+/* ============================================================
+   MANUAL CROP TOOL
+   ============================================================ */
+.crop-btn-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    margin: 6px 0 4px;
+    flex-wrap: wrap;
+}
+.crop-toggle-btn.active {
+    background: var(--accent-color);
+    color: #fff;
+    border-color: var(--accent-color);
+}
+/* While in crop mode, the thumbnail wrapper gets a dashed border hint */
+.thumb-preview-wrapper.crop-mode img {
+    outline: 2px dashed var(--accent-color);
+    outline-offset: 2px;
+}
+/* Overlay canvas sits on top of the thumbnail */
+#cropOverlay {
+    z-index: 10;
+}
+/* Make sure the thumb wrapper is position:relative so absolute children work */
+#thumbPreviewWrapper {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+}
+
+/* ── Bead table toggle ─────────────────────────────────────────── */
+.table-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+.table-header-row h2 { margin: 0; }
+.table-collapse-btn {
+    font-size: 13px;
+    color: var(--text-muted);
+    padding: 2px 6px;
+    border-radius: 6px;
+    line-height: 1;
+    transition: color 0.15s, background 0.15s;
+}
+.table-collapse-btn:hover {
+    color: var(--accent-color);
+    background: var(--accent-soft, rgba(79,95,240,.12));
+}
+/* Pill shown below the canvas when the bead table is hidden */
+.show-beads-bar {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 4px;
 }

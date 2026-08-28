@@ -20,7 +20,9 @@ function colorDistance(r, g, b, targetLab, color, algorithm) {
 function findClosestColor(r, g, b, opts = {}, restrictToGrey = false) {
     const algorithm = opts.algorithm || 'ciede2000';
     let minDistance = Infinity;
-    let closestColor = paletteData[0];
+    // Use owned-colors filtered palette when active, otherwise full paletteData
+    const searchPalette = (typeof getActivePalette === 'function') ? getActivePalette() : paletteData;
+    let closestColor = searchPalette[0] || paletteData[0];
 
     const targetLab = rgbToLab(r, g, b);
     const sourceChroma = Math.sqrt(targetLab.a * targetLab.a + targetLab.b * targetLab.b);
@@ -40,8 +42,8 @@ function findClosestColor(r, g, b, opts = {}, restrictToGrey = false) {
 
     const forceGreyOnly = restrictToGrey || isProtectedBlack(r, g, b);
 
-    for (let i = 0; i < paletteData.length; i++) {
-        const color = paletteData[i];
+    for (let i = 0; i < searchPalette.length; i++) {
+        const color = searchPalette[i];
         if (forceGreyOnly && !color.code.startsWith('H')) continue;
 
         let distance = colorDistance(r, g, b, targetLab, color, algorithm);

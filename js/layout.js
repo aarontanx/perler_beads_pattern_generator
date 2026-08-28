@@ -55,6 +55,8 @@ viewTabs.forEach(tab => {
             if (match) c.hidden = false; else c.hidden = true;
         });
         drawCursorOverlay();
+        // Re-apply zoom now that the newly-visible canvas has real layout dimensions
+        applyZoom();
     });
 });
 
@@ -63,14 +65,26 @@ let zoomPct = 100;
 const ZOOM_STEPS = [50, 65, 80, 100, 125, 150, 175, 200, 250, 300];
 function applyZoom() {
     document.getElementById('zoomValue').textContent = `${zoomPct}%`;
+
+    // Use the main panel's available width as the reference — individual
+    // canvas containers may be hidden (clientWidth = 0) so we can't rely on them.
+    const mainPanel = document.querySelector('.main-panel');
+    const availW = mainPanel ? mainPanel.clientWidth - 40 : 600;
+    const availH = Math.max(240, window.innerHeight - 240);
+
+    // Compute one shared scale based on the ACTIVE canvas so all three views
+    // display at the same visual size when tabs are switched.
+    const activeCanvas = document.querySelector('.canvas-container.active canvas:not(.cursor-overlay):not(.highlight-overlay)');
+    if (!activeCanvas || !activeCanvas.width || !activeCanvas.height) return;
+
+    const contain = Math.min(availW / activeCanvas.width, availH / activeCanvas.height, 3);
+    const scale = zoomPct === 100 ? contain : contain * (zoomPct / 100);
+
+    // Apply the same pixel width to all canvases (they share the same grid
+    // dimensions, so the same scale gives the same display size).
     document.querySelectorAll('.canvas-scale-wrapper canvas').forEach(cv => {
-        const container = cv.closest('.canvas-container');
-        const availW = container ? container.clientWidth - 28 : 600;
-        const availH = Math.max(240, window.innerHeight - 240); // viewport budget (toolbar + headers)
-        // 100% = contain (whole pattern visible); other steps scale around that
-        const contain = Math.min(availW / cv.width, availH / cv.height, 3);
-        const pct = zoomPct === 100 ? contain : contain * (zoomPct / 100);
-        cv.style.width = `${Math.max(40, Math.round(cv.width * pct))}px`;
+        if (!cv.width) return;
+        cv.style.width = `${Math.max(40, Math.round(cv.width * scale))}px`;
     });
 }
 document.getElementById('zoomInBtn').addEventListener('click', () => {

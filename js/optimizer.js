@@ -74,7 +74,7 @@ function runOptimizer() {
             const ref = computeGrid(refSample, baseW, refH, { ...opts, mergeColors: false, quantizeK: 32 });
 
             let best = null;
-            const kCandidates = opts.smartQuantize ? [opts.quantizeK, Math.round(opts.quantizeK * 0.75), Math.round(opts.quantizeK * 0.5), 12, 8].filter(k => k >= 4) : [null];
+            const kCandidates = opts.smartQuantize ? [opts.quantizeK] : [null];
 
             for (const w of [...candidates].sort((a, b) => a - b)) {
                 const h = Math.max(5, Math.min(200, Math.round(w * aspect)));
@@ -103,8 +103,6 @@ function runOptimizer() {
                 updateGridDimensionsFromScale();
                 gridWidthInput.value = best.w;
                 gridHeightInput.value = best.h;
-                if (best.k && best.k !== opts.quantizeK) quantizeColorCountInput.value = best.k;
-                quantizeCountValue.innerText = quantizeColorCountInput.value;
                 generatePattern();
 
                 optimizeStats.hidden = false;

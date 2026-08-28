@@ -132,6 +132,11 @@
                         <option value="extended">Extended range</option>
                     </select>
                 </div>
+                <div class="owned-filter-row">
+                    <button type="button" id="ownedColorsBtn" class="btn-secondary btn-sm" title="Filter by colors you own">🎒 My colors</button>
+                    <span id="ownedFilterBadge" class="owned-badge" hidden>0</span>
+                    <span class="hint-inline">Restrict matching to beads you own</span>
+                </div>
                 <div class="control-group">
                     <label for="colorAlgo">Matching algorithm</label>
                     <select id="colorAlgo">
@@ -177,6 +182,10 @@
                     <button type="button" id="toolPaint" class="seg-btn active" aria-pressed="true">🎨 Paint</button>
                     <button type="button" id="toolErase" class="seg-btn" aria-pressed="false">🧼 Erase</button>
                 </div>
+                <div class="undo-redo-group">
+                    <button type="button" id="undoBtn" class="icon-btn undo-btn" disabled title="Undo (Ctrl+Z)">↩ Undo</button>
+                    <button type="button" id="redoBtn" class="icon-btn undo-btn" disabled title="Redo (Ctrl+Y / Ctrl+Shift+Z)">↪ Redo</button>
+                </div>
                 <div class="brush-preview-container">
                     <span id="brushSwatch" class="color-swatch" style="background-color:#000000"></span>
                     <div>
@@ -201,6 +210,19 @@
                     </select>
                 </div>
                 <button id="downloadBtn" class="btn-accent" disabled>⬇ Download PNG</button>
+                <button id="pdfExportBtn" class="btn-accent" style="margin-top:6px;">🖨️ Export PDF Blueprint</button>
+                <div class="checkbox-group" style="margin-top:4px;">
+                    <input type="checkbox" id="pdfMultiPageToggle">
+                    <label for="pdfMultiPageToggle">Split into 52×52 pegboard pages</label>
+                </div>
+                <p class="hint">PDF renders the full pattern on one page with a shopping list. Enable the toggle to split large patterns into pegboard-sized chunks.</p>
+                <hr class="section-divider">
+                <p class="mini-label">Session</p>
+                <div class="session-btn-group">
+                    <button type="button" id="exportSessionBtn" class="btn-secondary">💾 Save session</button>
+                    <button type="button" id="importSessionBtn" class="btn-secondary">📂 Load session</button>
+                    <input type="file" id="importSessionInput" accept=".json" hidden>
+                </div>
                 <p class="hint">On iOS the image opens in a modal — press and hold to save it.</p>
             </section>
 
@@ -215,14 +237,18 @@
                     <button type="button" class="seg-btn view-tab" data-view="blueprint" role="tab" aria-selected="false">Blueprint</button>
                     <button type="button" class="seg-btn view-tab" data-view="fused" role="tab" aria-selected="false">Fused Preview</button>
                 </div>
-                <div class="zoom-controls" role="group" aria-label="Canvas zoom">
-                    <button type="button" class="icon-btn" id="zoomOutBtn" aria-label="Zoom out">−</button>
-                    <span id="zoomValue" aria-live="polite">100%</span>
-                    <button type="button" class="icon-btn" id="zoomInBtn" aria-label="Zoom in">+</button>
-                    <button type="button" class="icon-btn" id="zoomResetBtn" aria-label="Reset zoom" title="Fit to panel">↺</button>
+                <div class="toolbar-right">
+                    <button type="button" id="compareBtn" class="icon-btn compare-btn" aria-pressed="false" title="Toggle source vs pattern comparison">⇔ Compare</button>
+                    <div class="zoom-controls" role="group" aria-label="Canvas zoom">
+                        <button type="button" class="icon-btn" id="zoomOutBtn" aria-label="Zoom out">−</button>
+                        <span id="zoomValue" aria-live="polite">100%</span>
+                        <button type="button" class="icon-btn" id="zoomInBtn" aria-label="Zoom in">+</button>
+                        <button type="button" class="icon-btn" id="zoomResetBtn" aria-label="Reset zoom" title="Fit to panel">↺</button>
+                    </div>
                 </div>
             </div>
 
+            <div class="canvas-area-wrapper">
             <div class="canvas-stage" id="canvasStage">
                 <div class="canvas-container active" id="baseView" data-view="base" role="tabpanel" aria-label="Base grid">
                     <div class="canvas-header-row"><h2>Base Grid <span class="h2-note">no codes</span></h2></div>
@@ -244,16 +270,51 @@
             </div>
 
             <div class="table-container" id="beadTableContainer" hidden>
-                <h2>Beads required</h2>
+                <div class="table-header-row">
+                    <h2>Beads required</h2>
+                    <button type="button" id="beadTableToggleBtn" class="icon-btn table-collapse-btn" title="Hide bead table" aria-label="Hide bead table" aria-expanded="true">✕</button>
+                </div>
                 <div id="beadTableContent"></div>
+            </div>
+
+            </div><!-- /.canvas-area-wrapper -->
+
+            <!-- Floating pill to restore bead table after it's been hidden -->
+            <div id="showBeadsBar" class="show-beads-bar" hidden>
+                <button type="button" id="showBeadsBtn" class="btn-secondary btn-sm">📋 Show beads required</button>
+            </div>
+
+            <!-- Compare panel — shown alongside canvas when compare mode is active -->
+            <div id="comparePanel" class="compare-panel" hidden>
+                <div class="canvas-header-row"><h2>Source Image <span class="h2-note">original</span></h2></div>
+                <div class="canvas-scale-wrapper" id="compareWrapper">
+                    <canvas id="compareSourceCanvas"></canvas>
+                </div>
             </div>
 
         </main>
     </div>
 
+    <!-- Owned Colors Modal -->
+    <div id="ownedColorsModal" class="modal-overlay" hidden aria-hidden="true" role="dialog" aria-label="My bead colors" aria-modal="true">
+        <div class="modal-box">
+            <div class="modal-head">
+                <h3>My Bead Colors</h3>
+                <button type="button" id="ownedColorsClose" class="icon-btn" aria-label="Close">✕</button>
+            </div>
+            <p class="hint">Check the colors you own. The pattern will only use those beads.</p>
+            <div class="modal-actions">
+                <button type="button" id="ownedSelectAll" class="btn-secondary btn-sm">Select all</button>
+                <button type="button" id="ownedClearAll" class="btn-secondary btn-sm">Clear all</button>
+            </div>
+            <div id="ownedColorsGrid" class="owned-colors-grid"></div>
+        </div>
+    </div>
+
     <script src="js/palettes.js"></script>
     <script src="js/color-math.js"></script>
     <script src="js/dom.js"></script>
+    <script src="js/toast.js"></script>
     <script src="js/palette-ui.js"></script>
     <script src="js/matching.js"></script>
     <script src="js/bead-table.js"></script>
@@ -263,9 +324,17 @@
     <script src="js/grid-sampling.js"></script>
     <script src="js/engine.js"></script>
     <script src="js/optimizer.js"></script>
+    <script src="js/owned-colors.js"></script>
+    <script src="js/undo.js"></script>
     <script src="js/editor.js"></script>
+    <script src="js/compare.js"></script>
+    <script src="js/color-highlight.js"></script>
+    <script src="js/crop-tool.js"></script>
     <script src="js/layout.js"></script>
+    <script src="js/pan.js"></script>
     <script src="js/controls-wiring.js"></script>
     <script src="js/exporter.js"></script>
+    <script src="js/pdf-export.js"></script>
+    <script src="js/session.js"></script>
 </body>
 </html>

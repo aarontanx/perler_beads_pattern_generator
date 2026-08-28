@@ -13,7 +13,7 @@ function kMeansLab(points, k, iterations = 8) {
     k = Math.max(1, Math.min(k, n));
     if (n === 0) return { assignments: [], centroids: [] };
 
-    const rand = mulberry32((n * 2654435761) >>> 0);
+    const rand = mulberry32(0xDEADBEEF); // fixed seed — stable palette across paint strokes
     const centroids = [{ ...points[Math.floor(rand() * n)] }];
     while (centroids.length < k) {
         const distances = points.map(p => {

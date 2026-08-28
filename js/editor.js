@@ -39,11 +39,16 @@ function setupPointerEditing(canvasEl) {
 
     canvasEl.addEventListener('pointerdown', e => {
         if (!croppedImageData) return;
+        // Middle-click is reserved for pan — never paint with it
+        if (e.pointerType === 'mouse' && e.button === 1) return;
         const cell = cellFromEvent(e, canvasEl);
         if (!cell) return;
         e.preventDefault();
         canvasEl.setPointerCapture(e.pointerId);
         painting = true;
+
+        // Snapshot BEFORE the stroke so undo restores the prior state
+        if (typeof undoSnapshot === 'function') undoSnapshot();
 
         const erase = isEraseGesture(e);
         if (e.pointerType !== 'mouse' && !erase) {
@@ -90,8 +95,12 @@ document.querySelectorAll('.canvas-scale-wrapper').forEach(wrapper => {
             case 'ArrowRight': cursorX = Math.min(gridW - 1, cursorX + 1); break;
             case 'ArrowUp': cursorY = Math.max(0, cursorY - 1); break;
             case 'ArrowDown': cursorY = Math.min(gridH - 1, cursorY + 1); break;
-            case 'Enter': case ' ': userOverrides[`${cursorX},${cursorY}`] = activeBrushColor; generatePattern(); break;
-            case 'x': case 'X': case 'Delete': case 'Backspace': delete userOverrides[`${cursorX},${cursorY}`]; generatePattern(); break;
+            case 'Enter': case ' ':
+                if (typeof undoSnapshot === 'function') undoSnapshot();
+                userOverrides[`${cursorX},${cursorY}`] = activeBrushColor; generatePattern(); break;
+            case 'x': case 'X': case 'Delete': case 'Backspace':
+                if (typeof undoSnapshot === 'function') undoSnapshot();
+                delete userOverrides[`${cursorX},${cursorY}`]; generatePattern(); break;
             default: handled = false;
         }
         if (handled) { e.preventDefault(); drawCursorOverlay(); }

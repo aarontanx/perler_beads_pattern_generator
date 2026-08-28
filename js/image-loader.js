@@ -65,6 +65,13 @@ imageUpload.addEventListener('change', (e) => {
 
             if (removeWhiteBgInput.checked) removeWhiteBackground(tempCanvas);
 
+            // Keep a copy of the full (pre-crop) canvas so the manual crop
+            // tool can reset to the original without requiring a re-upload.
+            window._rawCropCanvas = tempCanvas.cloneNode();
+            window._rawCropCanvas.getContext('2d').drawImage(tempCanvas, 0, 0);
+            window._cropApplied = false;
+            if (typeof invalidateBaseGridCache === 'function') invalidateBaseGridCache();
+
             if (autoCropInput.checked) {
                 const imgData = tempCanvas.getContext('2d').getImageData(0, 0, img.width, img.height);
                 let minX = img.width, maxX = 0, minY = img.height, maxY = 0, hasContent = false;
